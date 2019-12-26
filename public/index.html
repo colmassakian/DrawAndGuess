@@ -7,23 +7,58 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
+    var nickname;
     $(function () {
         var socket = io();
-        $('form').submit(function(e){
+        $('#messageContainer').hide();
+        $("#nameSelector").submit(function(e){
             e.preventDefault(); // prevents page reloading
-            socket.emit('chat message', $('#m').val());
+            $('#messageContainer').show();
+            $('#modalContainer').hide();
+            nickname = $('#nickname').val();
+        });
+        $("#chatMessage").submit(function(e){
+            e.preventDefault(); // prevents page reloading
+            socket.emit('chat message', nickname + ": " + $('#m').val());
             $('#m').val('');
             return false;
         });
         socket.on('chat message', function(msg){
+            var message = $('<li>').text(nickname + ": " + msg);
+            var line = nickname + ": " + message;
             $('#messages').append($('<li>').text(msg));
         });
     });
 </script>
+
+<script>
+    // Get the modal
+    var modal = document.getElementById("nameModal");
+    var messageCon = document.getElementById("messageContainer");
+
+    function closeModal() {
+        modal.style.display = "none";
+        messageCon.style.display = "block";
+    }
+</script>
 <body>
-<ul id="messages"></ul>
-<form action="">
-    <input id="m" autocomplete="off" /><button>Send</button>
-</form>
+<!-- The Modal -->
+<div id="modalContainer" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+        <p>Enter you name</p>
+        <form id="nameSelector" action="">
+            <input id="nickname" autocomplete="off" />
+        </form>
+    </div>
+
+</div>
+<div id="messageContainer">
+    <ul id="messages"></ul>
+    <form id="chatMessage" action="">
+        <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+</div>
 </body>
 </html>
