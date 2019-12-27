@@ -8,14 +8,25 @@
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
     var nickname;
+    var room;
     $(function () {
         var socket = io();
+        $('#roomModalContainer').hide();
         $('#messageContainer').hide();
+        $('#nickname').focus();
         $("#nameSelector").submit(function(e){
             e.preventDefault(); // prevents page reloading
-            $('#messageContainer').show();
-            $('#modalContainer').hide();
+            $('#roomModalContainer').show();
+            $('#nameModalContainer').fadeOut(750);
+            $("#room").focus();
             nickname = $('#nickname').val();
+        });
+        $("#roomSelector").submit(function(e){
+            e.preventDefault(); // prevents page reloading
+            $('#messageContainer').show();
+            $('#roomModalContainer').fadeOut(750);
+            $("#m").focus();
+            room = $('#room').val();
         });
         $("#chatMessage").submit(function(e){
             e.preventDefault(); // prevents page reloading
@@ -30,26 +41,24 @@
         });
     });
 </script>
-
-<script>
-    // Get the modal
-    var modal = document.getElementById("nameModal");
-    var messageCon = document.getElementById("messageContainer");
-
-    function closeModal() {
-        modal.style.display = "none";
-        messageCon.style.display = "block";
-    }
-</script>
 <body>
 <!-- The Modal -->
-<div id="modalContainer" class="modal">
+<div id="nameModalContainer" class="modal">
 
     <!-- Modal content -->
     <div class="modal-content">
-        <p>Enter you name</p>
         <form id="nameSelector" action="">
-            <input id="nickname" autocomplete="off" />
+            <input class="modalInput" id="nickname" autocomplete="off" placeholder="Enter a nickname"/>
+        </form>
+    </div>
+
+</div>
+<div id="roomModalContainer" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+        <form id="roomSelector" action="">
+            <input class="modalInput" id="room" autocomplete="off" placeholder="Enter a room"/>
         </form>
     </div>
 
