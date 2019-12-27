@@ -14,6 +14,7 @@
         $('#roomModalContainer').hide();
         $('#messageContainer').hide();
         $('#nickname').focus();
+        // Read nickname, hide name modal, show room modal
         $("#nameSelector").submit(function(e){
             e.preventDefault(); // prevents page reloading
             $('#roomModalContainer').show();
@@ -21,19 +22,24 @@
             $("#room").focus();
             nickname = $('#nickname').val();
         });
+        // Read room, hide room modal, show main chat page
         $("#roomSelector").submit(function(e){
             e.preventDefault(); // prevents page reloading
             $('#messageContainer').show();
             $('#roomModalContainer').fadeOut(750);
             $("#m").focus();
             room = $('#room').val();
+            socket.emit('room', room);
         });
+        // Send message to other connections
         $("#chatMessage").submit(function(e){
             e.preventDefault(); // prevents page reloading
-            socket.emit('chat message', nickname + ": " + $('#m').val());
+            var msg = {roomName:room, message:nickname + ": " + $('#m').val()};
+            socket.emit('chat message', msg);
             $('#m').val('');
             return false;
         });
+        // Show received message
         socket.on('chat message', function(msg){
             var message = $('<li>').text(nickname + ": " + msg);
             var line = nickname + ": " + message;

@@ -8,7 +8,10 @@ app.use(express.static("public"));
 io.on('connection', function(socket){
     console.log('a user connected');
     socket.on('chat message', function(msg){
-        io.emit('chat message', msg);
+        io.in(msg.roomName).emit('chat message', msg.message);
+    });
+    socket.on('room', function(room) {
+        socket.join(room);
     });
     socket.on('disconnect', function(){
         console.log('user disconnected');
