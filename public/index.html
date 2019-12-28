@@ -4,72 +4,29 @@
     <title>Socket.IO chat</title>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
-<script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-<script>
-    var nickname;
-    var room;
-    $(function () {
-        var socket = io();
-        $('#roomModalContainer').hide();
-        $('#messageContainer').hide();
-        $('#nickname').focus();
-        // Read nickname, hide name modal, show room modal
-        $("#nameSelector").submit(function(e){
-            e.preventDefault(); // prevents page reloading
-            $('#roomModalContainer').show();
-            $('#nameModalContainer').fadeOut(750);
-            $("#room").focus();
-            nickname = $('#nickname').val();
-        });
-        // Read room, hide room modal, show main chat page
-        $("#roomSelector").submit(function(e){
-            e.preventDefault(); // prevents page reloading
-            $('#messageContainer').show();
-            $('#roomModalContainer').fadeOut(750);
-            $("#m").focus();
-            room = $('#room').val();
-            socket.emit('room', room);
-        });
-        // Send message to other connections
-        $("#chatMessage").submit(function(e){
-            e.preventDefault(); // prevents page reloading
-            var msg = {roomName:room, message:nickname + ": " + $('#m').val()};
-            socket.emit('chat message', msg);
-            $('#m').val('');
-            return false;
-        });
-        // Show received message
-        socket.on('chat message', function(msg){
-            var message = $('<li>').text(nickname + ": " + msg);
-            var line = nickname + ": " + message;
-            $('#messages').append($('<li>').text(msg));
-        });
-    });
-</script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/main.js"></script>
 <body>
 <!-- The Modal -->
 <div id="nameModalContainer" class="modal">
-
     <!-- Modal content -->
     <div class="modal-content">
         <form id="nameSelector" action="">
             <input class="modalInput" id="nickname" autocomplete="off" placeholder="Enter a nickname"/>
         </form>
     </div>
-
 </div>
-<div id="roomModalContainer" class="modal">
-
+<div id="roomModalContainer" class="modal" style="display: none;">
     <!-- Modal content -->
     <div class="modal-content">
         <form id="roomSelector" action="">
             <input class="modalInput" id="room" autocomplete="off" placeholder="Enter a room"/>
         </form>
     </div>
-
 </div>
-<div id="messageContainer">
+<div id="messageContainer" style="display: none;">
+    <div id="word"></div>
     <ul id="messages"></ul>
     <form id="chatMessage" action="">
         <input id="m" autocomplete="off" /><button>Send</button>

@@ -58,7 +58,7 @@ form button {
 }
 
 .modal-content {
-    color: #fefefe;
+    background-color: black;
     margin: auto;
     position: relative;
     top: 50%;
