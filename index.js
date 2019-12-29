@@ -2,21 +2,19 @@ const express = require("express");
 const app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
+var fs = require("fs");
+var text = fs.readFileSync("nounlist.txt", "utf-8");
+var textByLine = text.split("\n");
 
 app.use(express.static("public"));
 var clients =[];
 var currPlayer = 0;
-var word = "secret";
-var word2 = "newsecret";
+var wordCounter = 0;
+
 io.on('connection', function(socket){
     console.log('a user connected');
     clients.push(socket.id);
-    // console.log(clients);
-    // if(clients.length == 1)
-    // {
-    //     console.log("Sent");
-    //     socket.broadcast.to(clients[0]).emit('word', 'word to play');
-    // }
+
     // Send message to clients in msg.roomName
     socket.on('chat message', function(msg){
         // Use for rooms
@@ -25,20 +23,17 @@ io.on('connection', function(socket){
     });
     socket.on('room', function(room){
         socket.join(room);
-        var msg = {playerID:clients[currPlayer], data:word};
+        var msg = {playerID:clients[currPlayer], data:textByLine[wordCounter]};
         console.log("Curr Player: " + msg.playerID);
         io.emit('word', msg);
-        // io.of('/').in(room).clients((error, client) => {
-        //     if (error) throw error;
-        //     console.log(client);
-        // });
     });
     socket.on('round over', function(bool){
         console.log("New Round");
         currPlayer ++;
         if(currPlayer >= clients.length)
             currPlayer = currPlayer % clients.length;
-        var msg = {playerID:clients[currPlayer], data:word2};
+        wordCounter++;
+        var msg = {playerID:clients[currPlayer], data:textByLine[wordCounter]};
         io.emit('word', msg);
     });
     socket.on('disconnect', function(){
