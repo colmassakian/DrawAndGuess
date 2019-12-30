@@ -9,7 +9,6 @@ var textByLine = text.split("\n");
 app.use(express.static("public"));
 var clients =[];
 var currPlayer = 0;
-var wordCounter = 0;
 
 io.on('connection', function(socket){
     console.log('a user connected');
@@ -23,7 +22,8 @@ io.on('connection', function(socket){
     });
     socket.on('room', function(room){
         socket.join(room);
-        var msg = {playerID:clients[currPlayer], data:textByLine[wordCounter]};
+        var random = Math.floor(Math.random() * textByLine.length);
+        var msg = {playerID:clients[currPlayer], data:textByLine[random]};
         console.log("Curr Player: " + msg.playerID);
         io.emit('word', msg);
     });
@@ -32,8 +32,13 @@ io.on('connection', function(socket){
         currPlayer ++;
         if(currPlayer >= clients.length)
             currPlayer = currPlayer % clients.length;
-        wordCounter++;
-        var msg = {playerID:clients[currPlayer], data:textByLine[wordCounter]};
+        var random = Math.floor(Math.random() * textByLine.length);
+        var msg = {playerID:clients[currPlayer], data:textByLine[random]};
+        io.emit('word', msg);
+    });
+    socket.on('new word', function(room){
+        var random = Math.floor(Math.random() * textByLine.length);
+        var msg = {playerID:clients[currPlayer], data:textByLine[random]};
         io.emit('word', msg);
     });
     socket.on('disconnect', function(){

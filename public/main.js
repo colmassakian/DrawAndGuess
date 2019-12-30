@@ -33,8 +33,14 @@ $(function () {
         if(text == word)
         {
             socket.emit('round over', true);
-            $("#word").text('');
+            // $("#word").text('');
         }
+        return false;
+    });
+    // Notify other connections that word was changed
+    $("#wordButton").submit(function(e){
+        e.preventDefault(); // prevents page reloading
+        socket.emit('new word', room);
         return false;
     });
     // Show received message
@@ -45,16 +51,11 @@ $(function () {
         word = msg.data;
         if(socket.id == msg.playerID)
         {
+            $("#word-wrapper").show();
             $("#word").text(word);
             // console.log("Matches");
         }
-
+        else
+            $("#word-wrapper").hide();
     });
-    // socket.on('connect', () => {
-    //     console.log("My ID: " + socket.id); // an alphanumeric id...
-    // });
-    // Print word
-    // socket.on('word', function(word){
-    //     $("#word").text(word);
-    // });
 });

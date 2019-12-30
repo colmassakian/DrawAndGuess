@@ -26,7 +26,13 @@
     </div>
 </div>
 <div id="messageContainer" style="display: none;">
-    <div id="word"></div>
+    <div id="word-wrapper">
+        <div id="word"></div>
+        <!--<button class="word-button">New Word</button>-->
+        <form id="wordButton" action="">
+            <input id="newWord" type="submit" value="New Word">
+        </form>
+    </div>
     <ul id="messages"></ul>
     <form id="chatMessage" action="">
         <input id="m" autocomplete="off" /><button>Send</button>
