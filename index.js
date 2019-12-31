@@ -28,6 +28,10 @@ io.on('connection', function(socket){
         console.log("Curr Player: " + msg.playerID);
         io.emit('word', msg);
     });
+    // Emit drawing information to clients
+    socket.on('drawing', (data) => socket.broadcast.emit('drawing', data));
+
+    // Emit the next word to the next player
     socket.on('round over', function(bool){
         console.log("New Round");
         currPlayer ++;
@@ -37,6 +41,7 @@ io.on('connection', function(socket){
         var msg = {playerID:clients[currPlayer], data:textByLine[random]};
         io.emit('word', msg);
     });
+    // Emit the user's new word to other clients
     socket.on('new word', function(room){
         var random = Math.floor(Math.random() * textByLine.length);
         var msg = {playerID:clients[currPlayer], data:textByLine[random]};
