@@ -20,6 +20,7 @@ io.on('connection', function(socket){
         // io.to(msg.roomName).emit('chat message', msg.message);
         io.emit('chat message', msg.message);
     });
+    // TODO: Don't assign a new word everytime someones joins a room, just boadcast the current word
     socket.on('room', function(room){
         socket.join(room);
         var random = Math.floor(Math.random() * textByLine.length);
