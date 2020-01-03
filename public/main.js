@@ -1,12 +1,14 @@
 var nickname;
 var room;
 var word;
+var isCurrPlayer = false;
 
 $(function () {
     var socket = io();
     var canvas = document.getElementsByClassName('whiteboard')[0];
     var colors = document.getElementsByClassName('color');
     var context = canvas.getContext('2d');
+    fitToContainer(canvas);
 
     var current = {
         color: 'black'
@@ -31,6 +33,7 @@ $(function () {
         socket.emit('room', room);
     });
 
+    // TODO: Hide/ use header for players whose turn it isn't
     canvas.addEventListener('mousedown', onMouseDown, false);
     canvas.addEventListener('mouseup', onMouseUp, false);
     canvas.addEventListener('mouseout', onMouseUp, false);
@@ -51,19 +54,34 @@ $(function () {
     window.addEventListener('resize', onResize, false);
     onResize();
 
+    function fitToContainer(canvas){
+        canvas.style.width='100%';
+        canvas.style.height='100%';
+        canvas.width  = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+    }
 
     function drawLine(x0, y0, x1, y1, color, emit){
+        var w = canvas.width;
+        var h = canvas.height;
+        var rect = canvas.getBoundingClientRect();
+        var offsetX = rect.left;
+        var offsetY = rect.top;
+        var adjW = canvas.scrollWidth / w;
+        var adjH = canvas.scrollHeight / h;
+        // console.log("scroll w: " + canvas.scrollWidth + ", width " + w);
+        // console.log("scroll h: " + canvas.scrollHeight + ", height " + h);
+
         context.beginPath();
-        context.moveTo(x0, y0);
-        context.lineTo(x1, y1);
+        context.moveTo((x0 - offsetX) / adjW, (y0 - offsetY) / adjH);
+        context.lineTo((x1 - offsetX) / adjW, (y1 - offsetY) / adjH);
         context.strokeStyle = color;
         context.lineWidth = 2;
         context.stroke();
         context.closePath();
 
         if (!emit) { return; }
-        var w = canvas.width;
-        var h = canvas.height;
+
 
         socket.emit('drawing', {
             x0: x0 / w,
@@ -75,7 +93,10 @@ $(function () {
     }
 
     function onMouseDown(e){
-        drawing = true;
+        if(!isCurrPlayer)
+            drawing = false;
+        else
+            drawing = true;
         current.x = e.clientX||e.touches[0].clientX;
         current.y = e.clientY||e.touches[0].clientY;
     }
@@ -129,8 +150,9 @@ $(function () {
         socket.emit('chat message', msg);
         $('#m').val('');
         console.log(text);
-        if(text == word)
+        if(text == word && !isCurrPlayer)
             socket.emit('round over', true);
+
         return false;
     });
     // Notify other connections that word was changed
@@ -146,12 +168,17 @@ $(function () {
     // Either hide or show the word for the round and the option to change it
     socket.on('word', function(msg){
         word = msg.data;
+        context.clearRect(0, 0, canvas.width, canvas.height);
         if(socket.id == msg.playerID)
         {
+            isCurrPlayer = true;
             $("#word-wrapper").show();
             $("#word").text(word);
         }
         else
+        {
             $("#word-wrapper").hide();
+            isCurrPlayer = false;
+        }
     });
 });

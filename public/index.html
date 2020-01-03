@@ -26,25 +26,29 @@
     </div>
 </div>
 <div id="mainPageContainer" style="display: none;">
-    <div id="word-wrapper">
+    <div class="wordContainer" id="word-wrapper">
         <div id="word"></div>
         <!--<button class="word-button">New Word</button>-->
         <form id="wordButton" action="">
-            <input id="newWord" type="submit" value="New Word">
+            <input clss="newWord" id="newWord" type="submit" value="New Word">
         </form>
     </div>
-    <canvas class="whiteboard" ></canvas>
-    <div class="colors">
-        <div class="color black"></div>
-        <div class="color red"></div>
-        <div class="color green"></div>
-        <div class="color blue"></div>
-        <div class="color yellow"></div>
+    <div class="canvasContainer">
+        <canvas class="whiteboard"></canvas>
+        <div class="colors">
+            <div class="color black"></div>
+            <div class="color red"></div>
+            <div class="color green"></div>
+            <div class="color blue"></div>
+            <div class="color yellow"></div>
+        </div>
     </div>
-    <ul id="messages"></ul>
-    <form id="chatMessage" action="">
-        <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
+    <div class="chatContainer">
+        <ul id="messages"></ul>
+        <form id="chatMessage" action="">
+            <input id="m" autocomplete="off" /><button>Send</button>
+        </form>
+    </div>
 </div>
 </body>
 </html>

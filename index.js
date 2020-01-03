@@ -14,6 +14,7 @@ io.on('connection', function(socket){
     console.log('a user connected');
     clients.push(socket.id);
 
+    // TODO: Only send to clients in each room
     // Send message to clients in msg.roomName
     socket.on('chat message', function(msg){
         // Use for rooms
@@ -25,7 +26,7 @@ io.on('connection', function(socket){
         socket.join(room);
         var random = Math.floor(Math.random() * textByLine.length);
         var msg = {playerID:clients[currPlayer], data:textByLine[random]};
-        console.log("Curr Player: " + msg.playerID);
+
         io.emit('word', msg);
     });
     // Emit drawing information to clients
@@ -50,10 +51,8 @@ io.on('connection', function(socket){
     socket.on('disconnect', function(){
         console.log('user disconnected');
         for( var i=0; i < clients.length; ++ i ){
-
             if(clients[i] == socket.id){
-                // TODO: Iterate through clients to assign new word
-                clients.splice(i,1);
+                clients.splice(i, 1);
                 console.log("removed user");
                 break;
             }
