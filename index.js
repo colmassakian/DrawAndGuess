@@ -7,59 +7,102 @@ var text = fs.readFileSync("nounlist.txt", "utf-8");
 var textByLine = text.split("\n");
 
 app.use(express.static("public"));
-var clients =[];
-var currPlayer = 0;
+var roomInfo =[];
 
 io.on('connection', function(socket){
     console.log('a user connected');
-    clients.push(socket.id);
 
-    // TODO: Only send to clients in each room
     // Send message to clients in msg.roomName
     socket.on('chat message', function(msg){
-        // Use for rooms
-        // io.to(msg.roomName).emit('chat message', msg.message);
-        io.emit('chat message', msg.message);
+        io.to(msg.roomName).emit('chat message', msg.message);
     });
-    // TODO: Don't assign a new word everytime someones joins a room, just boadcast the current word
+
+    // TODO: Display list of rooms
     socket.on('room', function(room){
         socket.join(room);
-        var random = Math.floor(Math.random() * textByLine.length);
-        var msg = {playerID:clients[currPlayer], data:textByLine[random]};
 
-        io.emit('word', msg);
+        var currentWord;
+        var playerID;
+        var msg;
+        var roomIndex = contains(roomInfo, room);
+        var clients = io.sockets.adapter.rooms[room].sockets;
+
+        if(roomIndex == -1) // New room
+        {
+            var random = Math.floor(Math.random() * textByLine.length);
+            currentWord = textByLine[random];
+            playerID = getID(clients, 0);
+            // Store current game state for the room in an array
+            roomInfo.push({roomName: room, currPlayer: 0, currWord: currentWord});
+        }
+        else // Room already exists
+        {
+            currentWord = roomInfo[roomIndex].currWord;
+            playerID = getID(clients, roomInfo[roomIndex].currPlayer);
+        }
+
+        msg = {playerID: playerID, data: currentWord};
+        io.to(room).emit('word', msg);
     });
-    // Emit drawing information to clients
-    socket.on('drawing', (data) => socket.broadcast.emit('drawing', data));
+    // Emit drawing information to clients in room
+    socket.on('drawing', (data) => socket.to(data.roomName).emit('drawing', data));
 
     // Emit the next word to the next player
-    socket.on('round over', function(bool){
-        console.log("New Round");
-        currPlayer ++;
-        if(currPlayer >= clients.length)
-            currPlayer = currPlayer % clients.length;
+    socket.on('round over', function(room){
+        var numClients = io.sockets.adapter.rooms[room].length;
+        var clients = io.sockets.adapter.rooms[room].sockets;
+        var roomIndex = contains(roomInfo, room);
+
+        // Get next player's index
+        var current = roomInfo[roomIndex].currPlayer;
+        current ++;
+        if(current >= numClients)
+            current = current % numClients;
+
         var random = Math.floor(Math.random() * textByLine.length);
-        var msg = {playerID:clients[currPlayer], data:textByLine[random]};
-        io.emit('word', msg);
+        var id = getID(clients, current);
+        var msg = {playerID: id, data: textByLine[random]};
+        roomInfo[roomIndex].currPlayer = current;
+        io.to(room).emit('word', msg);
     });
     // Emit the user's new word to other clients
     socket.on('new word', function(room){
+        var clients = io.sockets.adapter.rooms[room].sockets;
+        var roomIndex = contains(roomInfo, room);
+
         var random = Math.floor(Math.random() * textByLine.length);
-        var msg = {playerID:clients[currPlayer], data:textByLine[random]};
-        io.emit('word', msg);
+        var id = getID(clients, roomInfo[roomIndex].currPlayer);
+        var msg = {playerID:id, data:textByLine[random]};
+        io.to(room).emit('word', msg);
     });
     socket.on('disconnect', function(){
         console.log('user disconnected');
-        for( var i=0; i < clients.length; ++ i ){
-            if(clients[i] == socket.id){
-                clients.splice(i, 1);
-                console.log("removed user");
-                break;
-            }
-        }
     });
 });
 
 http.listen(3000, function(){
     console.log('listening on *:3000');
 });
+
+// Return index of element whose 'roomName' field matches the targetName
+function contains(arr, targetName) {
+    for(var i = 0; i < arr.length; i++) {
+        if (arr[i].roomName == targetName)
+            return i;
+    }
+
+    return -1;
+}
+
+// Return id from clients array at desired index
+function getID(clients, index) {
+    var i = 0;
+    for (var clientId in clients ) {
+        if(i == index)
+            return clientId;
+
+        i ++;
+    }
+
+    return -1;
+}

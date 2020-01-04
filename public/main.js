@@ -61,6 +61,7 @@ $(function () {
         canvas.height = canvas.offsetHeight;
     }
 
+    // TODO: Adjust drawing for clients too?
     function drawLine(x0, y0, x1, y1, color, emit){
         var w = canvas.width;
         var h = canvas.height;
@@ -69,8 +70,6 @@ $(function () {
         var offsetY = rect.top;
         var adjW = canvas.scrollWidth / w;
         var adjH = canvas.scrollHeight / h;
-        // console.log("scroll w: " + canvas.scrollWidth + ", width " + w);
-        // console.log("scroll h: " + canvas.scrollHeight + ", height " + h);
 
         context.beginPath();
         context.moveTo((x0 - offsetX) / adjW, (y0 - offsetY) / adjH);
@@ -84,6 +83,7 @@ $(function () {
 
 
         socket.emit('drawing', {
+            roomName: room,
             x0: x0 / w,
             y0: y0 / h,
             x1: x1 / w,
@@ -146,12 +146,20 @@ $(function () {
     $("#chatMessage").submit(function(e){
         e.preventDefault(); // prevents page reloading
         var text = $('#m').val();
+        // Package client's room and nickname with message
         var msg = {roomName:room, message:nickname + ": " + text};
+        // Don't let current player write the word in chat
+        if(text == word && isCurrPlayer)
+            msg.message = nickname + ": " + "*".repeat(word.length);
+
         socket.emit('chat message', msg);
-        $('#m').val('');
-        console.log(text);
+        $('#m').val(''); // Clear the chat input field
+
+        // TODO: Keep score
+        // TODO: Highlight correct answer
+        // Check if a client whose turn it isn't got the correct word
         if(text == word && !isCurrPlayer)
-            socket.emit('round over', true);
+            socket.emit('round over', room);
 
         return false;
     });
@@ -172,12 +180,13 @@ $(function () {
         if(socket.id == msg.playerID)
         {
             isCurrPlayer = true;
-            $("#word-wrapper").show();
+            $("#wordButton").show();
             $("#word").text(word);
         }
         else
         {
-            $("#word-wrapper").hide();
+            $("#wordButton").hide();
+            $("#word").text("_ ".repeat(word.length));
             isCurrPlayer = false;
         }
     });
