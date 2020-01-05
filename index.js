@@ -3,6 +3,7 @@ const app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var fs = require("fs");
+const port = process.env.PORT || 3000;
 var text = fs.readFileSync("nounlist.txt", "utf-8");
 var textByLine = text.split("\n");
 
@@ -82,9 +83,7 @@ io.on('connection', function(socket){
     });
 });
 
-http.listen(3000, function(){
-    console.log('listening on *:3000');
-});
+http.listen(port, () => console.log('listening on port ' + port));
 
 // Return index of element whose 'roomName' field matches the targetName
 function contains(arr, targetName) {
