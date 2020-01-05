@@ -7,11 +7,13 @@ $(function () {
     var socket = io();
     var canvas = document.getElementsByClassName('whiteboard')[0];
     var colors = document.getElementsByClassName('color');
+    var sizes = document.getElementsByClassName('size');
     var context = canvas.getContext('2d');
     fitToContainer(canvas);
 
     var current = {
-        color: 'black'
+        color: 'black',
+        size: 3
     };
     var drawing = false;
     $('#nickname').focus();
@@ -30,117 +32,8 @@ $(function () {
         $('#roomModalContainer').fadeOut(750);
         $("#m").focus();
         room = $('#room').val();
-        socket.emit('room', room);
+        socket.emit('room', {name: nickname, roomName: room});
     });
-
-    canvas.addEventListener('mousedown', onMouseDown, false);
-    canvas.addEventListener('mouseup', onMouseUp, false);
-    canvas.addEventListener('mouseout', onMouseUp, false);
-    canvas.addEventListener('mousemove', throttle(onMouseMove, 10), false);
-
-    //Touch support for mobile devices
-    canvas.addEventListener('touchstart', onMouseDown, false);
-    canvas.addEventListener('touchend', onMouseUp, false);
-    canvas.addEventListener('touchcancel', onMouseUp, false);
-    canvas.addEventListener('touchmove', throttle(onMouseMove, 10), false);
-
-    for (var i = 0; i < colors.length; i++){
-        colors[i].addEventListener('click', onColorUpdate, false);
-    }
-
-    socket.on('drawing', onDrawingEvent);
-
-    window.addEventListener('resize', onResize, false);
-    onResize();
-
-    function fitToContainer(canvas){
-        canvas.style.width='100%';
-        canvas.style.height='100%';
-        canvas.width  = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-    }
-
-    // TODO: Adjust drawing for clients too?
-    function drawLine(x0, y0, x1, y1, color, emit){
-        var w = canvas.width;
-        var h = canvas.height;
-        var rect = canvas.getBoundingClientRect();
-        var offsetX = rect.left;
-        var offsetY = rect.top;
-        var adjW = canvas.scrollWidth / w;
-        var adjH = canvas.scrollHeight / h;
-
-        context.beginPath();
-        context.moveTo((x0 - offsetX) / adjW, (y0 - offsetY) / adjH);
-        context.lineTo((x1 - offsetX) / adjW, (y1 - offsetY) / adjH);
-        context.strokeStyle = color;
-        context.lineWidth = 2;
-        context.stroke();
-        context.closePath();
-
-        if (!emit) { return; }
-
-
-        socket.emit('drawing', {
-            roomName: room,
-            x0: x0 / w,
-            y0: y0 / h,
-            x1: x1 / w,
-            y1: y1 / h,
-            color: color
-        });
-    }
-
-    function onMouseDown(e){
-        if(!isCurrPlayer)
-            drawing = false;
-        else
-            drawing = true;
-        current.x = e.clientX||e.touches[0].clientX;
-        current.y = e.clientY||e.touches[0].clientY;
-    }
-
-    function onMouseUp(e){
-        if (!drawing) { return; }
-        drawing = false;
-        drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, true);
-    }
-
-    function onMouseMove(e){
-        if (!drawing) { return; }
-        drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, true);
-        current.x = e.clientX||e.touches[0].clientX;
-        current.y = e.clientY||e.touches[0].clientY;
-    }
-
-    function onColorUpdate(e){
-        current.color = e.target.className.split(' ')[1];
-    }
-
-    // limit the number of events per second
-    function throttle(callback, delay) {
-        var previousCall = new Date().getTime();
-        return function() {
-            var time = new Date().getTime();
-
-            if ((time - previousCall) >= delay) {
-                previousCall = time;
-                callback.apply(null, arguments);
-            }
-        };
-    }
-
-    function onDrawingEvent(data){
-        var w = canvas.width;
-        var h = canvas.height;
-        drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color);
-    }
-
-    // make the canvas fill its parent
-    function onResize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
     // Send message to other connections
     $("#chatMessage").submit(function(e){
         e.preventDefault(); // prevents page reloading
@@ -168,13 +61,21 @@ $(function () {
         return false;
     });
     // TODO: Highlight correct answer
+    // Don't combine nickname when sending, combine when displaying so that msg == word will work
     // Show received message
     socket.on('chat message', function(msg){
         $('#messages').append($('<li>').text(msg));
         $('#messages').animate({ scrollTop: $('#messages').height() }, "slow");
         // Colors correct message green if user with name 't' wrote it, need to make generic
-        // if(msg == "t: " + word)
-        //     $("li").last().css("background", "lawngreen");
+        if(msg.includes('joined the room!'))
+            $("li").last().css("text-align", "center");
+
+        if(msg.includes(word))
+        {
+            $('#messages').append($('<li>').text("The word was " + word + ". New round!"));
+            $("li").last().css("text-align", "center");
+        }
+
     });
     // Either hide or show the word for the round and the option to change it
     socket.on('word', function(msg){
@@ -193,4 +94,129 @@ $(function () {
             isCurrPlayer = false;
         }
     });
+
+    canvas.addEventListener('mousedown', onMouseDown, false);
+    canvas.addEventListener('mouseup', onMouseUp, false);
+    canvas.addEventListener('mouseout', onMouseUp, false);
+    canvas.addEventListener('mousemove', throttle(onMouseMove, 10), false);
+
+    //Touch support for mobile devices
+    canvas.addEventListener('touchstart', onMouseDown, false);
+    canvas.addEventListener('touchend', onMouseUp, false);
+    canvas.addEventListener('touchcancel', onMouseUp, false);
+    canvas.addEventListener('touchmove', throttle(onMouseMove, 10), false);
+
+    for (var i = 0; i < colors.length; i++){
+        colors[i].addEventListener('click', onColorUpdate, false);
+    }
+
+    for (var i = 0; i < sizes.length; i++){
+        sizes[i].addEventListener('click', onSizeUpdate, false);
+    }
+
+    socket.on('drawing', onDrawingEvent);
+
+    window.addEventListener('resize', onResize, false);
+    onResize();
+
+    function fitToContainer(canvas){
+        canvas.style.width='100%';
+        canvas.style.height='100%';
+        canvas.width  = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+    }
+
+    // TODO: Adjust drawing for clients too?
+    function drawLine(x0, y0, x1, y1, color, size, emit){
+        var w = canvas.width;
+        var h = canvas.height;
+        var rect = canvas.getBoundingClientRect();
+        var offsetX = rect.left;
+        var offsetY = rect.top;
+        var adjW = canvas.scrollWidth / w;
+        var adjH = canvas.scrollHeight / h;
+
+        context.beginPath();
+        context.moveTo((x0 - offsetX) / adjW, (y0 - offsetY) / adjH);
+        context.lineTo((x1 - offsetX) / adjW, (y1 - offsetY) / adjH);
+        context.strokeStyle = color;
+        context.lineWidth = size;
+        context.stroke();
+        context.closePath();
+
+        if (!emit) { return; }
+
+
+        socket.emit('drawing', {
+            roomName: room,
+            x0: x0 / w,
+            y0: y0 / h,
+            x1: x1 / w,
+            y1: y1 / h,
+            color: color,
+            size: size
+        });
+    }
+
+    function onMouseDown(e){
+        if(!isCurrPlayer)
+            drawing = false;
+        else
+            drawing = true;
+        current.x = e.clientX||e.touches[0].clientX;
+        current.y = e.clientY||e.touches[0].clientY;
+    }
+
+    function onMouseUp(e){
+        if (!drawing) { return; }
+        drawing = false;
+        drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, current.size, true);
+    }
+
+    function onMouseMove(e){
+        if (!drawing) { return; }
+        drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, current.size, true);
+        current.x = e.clientX||e.touches[0].clientX;
+        current.y = e.clientY||e.touches[0].clientY;
+    }
+
+    function onColorUpdate(e){
+        current.color = e.target.className.split(' ')[1];
+    }
+
+    function onSizeUpdate(e){
+        var sizeName = e.target.className.split(' ')[1];
+
+        if(sizeName == 'small')
+            current.size = 3;
+        else if(sizeName == 'medium')
+            current.size = 6;
+        else if(sizeName == 'large')
+            current.size = 9;
+    }
+
+    // limit the number of events per second
+    function throttle(callback, delay) {
+        var previousCall = new Date().getTime();
+        return function() {
+            var time = new Date().getTime();
+
+            if ((time - previousCall) >= delay) {
+                previousCall = time;
+                callback.apply(null, arguments);
+            }
+        };
+    }
+
+    function onDrawingEvent(data){
+        var w = canvas.width;
+        var h = canvas.height;
+        drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
+    }
+
+    // make the canvas fill its parent
+    function onResize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
 });

@@ -19,7 +19,8 @@ io.on('connection', function(socket){
     });
 
     // TODO: Display list of rooms
-    socket.on('room', function(room){
+    socket.on('room', function(data){
+        var room = data.roomName;
         socket.join(room);
 
         var currentWord;
@@ -43,6 +44,7 @@ io.on('connection', function(socket){
         }
 
         msg = {playerID: playerID, data: currentWord};
+        socket.to(room).emit('chat message', data.name + " joined the room!");
         io.to(room).emit('word', msg);
     });
     // Emit drawing information to clients in room

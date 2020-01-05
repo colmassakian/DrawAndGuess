@@ -1,5 +1,6 @@
 node_modules
 npm
+deploy.txt
 package-lock.json
 *.xml
 *.iml
