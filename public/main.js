@@ -2,7 +2,7 @@ var nickname;
 var room;
 var word;
 var isCurrPlayer = false;
-
+// TODO: Display message when user joins/leaves, when word is changed, and when word is guessed
 $(function () {
     var socket = io();
     var canvas = document.getElementsByClassName('whiteboard')[0];
@@ -33,7 +33,6 @@ $(function () {
         socket.emit('room', room);
     });
 
-    // TODO: Hide/ use header for players whose turn it isn't
     canvas.addEventListener('mousedown', onMouseDown, false);
     canvas.addEventListener('mouseup', onMouseUp, false);
     canvas.addEventListener('mouseout', onMouseUp, false);
@@ -156,7 +155,6 @@ $(function () {
         $('#m').val(''); // Clear the chat input field
 
         // TODO: Keep score
-        // TODO: Highlight correct answer
         // Check if a client whose turn it isn't got the correct word
         if(text == word && !isCurrPlayer)
             socket.emit('round over', room);
@@ -169,9 +167,14 @@ $(function () {
         socket.emit('new word', room);
         return false;
     });
+    // TODO: Highlight correct answer
     // Show received message
     socket.on('chat message', function(msg){
         $('#messages').append($('<li>').text(msg));
+        $('#messages').animate({ scrollTop: $('#messages').height() }, "slow");
+        // Colors correct message green if user with name 't' wrote it, need to make generic
+        // if(msg == "t: " + word)
+        //     $("li").last().css("background", "lawngreen");
     });
     // Either hide or show the word for the round and the option to change it
     socket.on('word', function(msg){

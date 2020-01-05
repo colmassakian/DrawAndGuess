@@ -72,7 +72,9 @@ io.on('connection', function(socket){
 
         var random = Math.floor(Math.random() * textByLine.length);
         var id = getID(clients, roomInfo[roomIndex].currPlayer);
-        var msg = {playerID:id, data:textByLine[random]};
+        var newWord = textByLine[random]
+        roomInfo[roomIndex].currWord = newWord;
+        var msg = {playerID: id, data: newWord};
         io.to(room).emit('word', msg);
     });
     socket.on('disconnect', function(){
