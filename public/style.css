@@ -69,7 +69,7 @@ input.modalInput {
     font-size: 3.5em;
 }
 
-#newWord{
+#newWord {
     background-color: #66a7af;
     border: none;
     color: black;
@@ -81,6 +81,21 @@ input.modalInput {
 }
 
 #newWord:hover {
+    background-color: #5088af;
+}
+
+#pass {
+    background-color: #66a7af;
+    border: none;
+    color: black;
+    padding: 10px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#pass:hover {
     background-color: #5088af;
 }
 
@@ -110,6 +125,7 @@ input.modalInput {
 
 .color {
     display: inline-block;
+    border: 1px solid black;
     height: 48px;
     width: 48px;
 }
@@ -130,6 +146,7 @@ input.modalInput {
 .color.green { background-color: green; }
 .color.blue { background-color: blue; }
 .color.yellow { background-color: yellow; }
+.color.white { background-color: white; }
 
 .size.small { height: 3px; width: 3px;}
 .size.medium { height: 6px; width: 6px;}

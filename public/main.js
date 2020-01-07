@@ -2,7 +2,8 @@ var nickname;
 var room;
 var word;
 var isCurrPlayer = false;
-// TODO: Display message when user joins/leaves, when word is changed, and when word is guessed
+var  savedDrawing = [];
+
 $(function () {
     var socket = io();
     var canvas = document.getElementsByClassName('whiteboard')[0];
@@ -54,12 +55,21 @@ $(function () {
 
         return false;
     });
+
     // Notify other connections that word was changed
     $("#wordButton").submit(function(e){
         e.preventDefault(); // prevents page reloading
         socket.emit('new word', room);
         return false;
     });
+    // Notify other connections that turn was passed
+    $("#passButton").submit(function(e){
+        e.preventDefault(); // prevents page reloading
+        socket.emit('pass turn', {name: nickname, roomName: room});
+        socket.emit('round over', room);
+        return false;
+    });
+
     // TODO: Highlight correct answer
     // Don't combine nickname when sending, combine when displaying so that msg == word will work
     // Show received message
@@ -67,7 +77,7 @@ $(function () {
         $('#messages').append($('<li>').text(msg));
         $('#messages').animate({ scrollTop: $('#messages').height() }, "slow");
         // Colors correct message green if user with name 't' wrote it, need to make generic
-        if(msg.includes('joined the room!'))
+        if(msg.includes('joined the room!') || msg.includes(' passed. New round!'))
             $("li").last().css("text-align", "center");
 
         if(msg.includes(word))
@@ -77,22 +87,39 @@ $(function () {
         }
 
     });
+    // TODO: Hide colors?
     // Either hide or show the word for the round and the option to change it
     socket.on('word', function(msg){
         word = msg.data;
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        // Clear screen and reset saved data when round is over
+        if(msg.roundOver) {
+            savedDrawing = [];
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
         if(socket.id == msg.playerID)
         {
             isCurrPlayer = true;
-            $("#wordButton").show();
+            $("#buttonWrapper").show();
             $("#word").text(word);
         }
         else
         {
-            $("#wordButton").hide();
+            $("#buttonWrapper").hide();
             $("#word").text("_ ".repeat(word.length));
             isCurrPlayer = false;
         }
+    });
+
+    // Emit room and drawing array
+    socket.on('request drawing', function(){
+        socket.emit('send drawing', savedDrawing);
+    });
+
+    // Draw the saved data to be up-to-date on the drawing for the round
+    socket.on('drawing info', function(data) {
+        for(var i = 0; i < data.length; i ++)
+            onDrawingEvent(data[i]);
     });
 
     canvas.addEventListener('mousedown', onMouseDown, false);
@@ -146,8 +173,7 @@ $(function () {
 
         if (!emit) { return; }
 
-
-        socket.emit('drawing', {
+        var drawingInfo = {
             roomName: room,
             x0: x0 / w,
             y0: y0 / h,
@@ -155,14 +181,17 @@ $(function () {
             y1: y1 / h,
             color: color,
             size: size
-        });
+        };
+
+        // Save drawing so that it can be emitted to clients who join in the middle of a round
+        if(isCurrPlayer)
+            savedDrawing.push(drawingInfo);
+
+        socket.emit('drawing', drawingInfo);
     }
 
     function onMouseDown(e){
-        if(!isCurrPlayer)
-            drawing = false;
-        else
-            drawing = true;
+        drawing = isCurrPlayer;
         current.x = e.clientX||e.touches[0].clientX;
         current.y = e.clientY||e.touches[0].clientY;
     }

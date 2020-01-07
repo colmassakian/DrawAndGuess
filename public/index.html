@@ -28,10 +28,14 @@
 <div id="mainPageContainer" style="display: none;">
     <div class="wordContainer" id="word-wrapper">
         <div id="word"></div>
-        <!--<button class="word-button">New Word</button>-->
-        <form id="wordButton" action="">
-            <input clss="newWord" id="newWord" type="submit" value="New Word">
-        </form>
+        <div id="buttonWrapper">
+            <form id="wordButton" action="">
+                <input clss="newWord" id="newWord" type="submit" value="New Word">
+            </form>
+            <form id="passButton" action="">
+                <input clss="pass" id="pass" type="submit" value="Pass">
+            </form>
+        </div>
     </div>
     <div class="canvasContainer">
         <canvas class="whiteboard"></canvas>
@@ -41,12 +45,15 @@
             <div class="color green"></div>
             <div class="color blue"></div>
             <div class="color yellow"></div>
+            <div class="color white"></div>
         </div>
+        <!-- TODO: Fix sizes -->
         <div class="sizes">
             <div class="size small"></div>
             <div class="size medium"></div>
             <div class="size large"></div>
         </div>
+        <!-- TODO: Add clear button/ eraser -->
     </div>
     <div class="chatContainer">
         <ul id="messages"></ul>

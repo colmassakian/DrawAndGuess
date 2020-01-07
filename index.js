@@ -43,13 +43,30 @@ io.on('connection', function(socket){
             playerID = getID(clients, roomInfo[roomIndex].currPlayer);
         }
 
-        msg = {playerID: playerID, data: currentWord};
+        msg = {playerID: playerID, data: currentWord, roundOver: false};
         socket.to(room).emit('chat message', data.name + " joined the room!");
+        if(socket.id != playerID)
+            io.to(playerID).emit('request drawing', "requested");
         io.to(room).emit('word', msg);
     });
     // Emit drawing information to clients in room
     socket.on('drawing', (data) => socket.to(data.roomName).emit('drawing', data));
 
+    socket.on('pass turn', (data) => socket.to(data.roomName).emit('chat message', data.name + " passed. New round!"));
+
+    // Send saved drawing info to last player to join the room
+    socket.on('send drawing', function(data){
+        if(data.length == 0)
+            return;
+
+        var room = data[0].roomName;
+
+        var numClients = io.sockets.adapter.rooms[room].length;
+        var clients = io.sockets.adapter.rooms[room].sockets;
+        
+        lastClientID = getID(clients, numClients - 1);
+        io.to(lastClientID).emit('drawing info', data);
+    });
     // Emit the next word to the next player
     socket.on('round over', function(room){
         var numClients = io.sockets.adapter.rooms[room].length;
@@ -64,7 +81,7 @@ io.on('connection', function(socket){
 
         var random = Math.floor(Math.random() * textByLine.length);
         var id = getID(clients, current);
-        var msg = {playerID: id, data: textByLine[random]};
+        var msg = {playerID: id, data: textByLine[random], roundOver: true};
         roomInfo[roomIndex].currPlayer = current;
         io.to(room).emit('word', msg);
     });
@@ -77,7 +94,7 @@ io.on('connection', function(socket){
         var id = getID(clients, roomInfo[roomIndex].currPlayer);
         var newWord = textByLine[random]
         roomInfo[roomIndex].currWord = newWord;
-        var msg = {playerID: id, data: newWord};
+        var msg = {playerID: id, data: newWord, roundOver: false};
         io.to(room).emit('word', msg);
     });
     socket.on('disconnect', function(){
