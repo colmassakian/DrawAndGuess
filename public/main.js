@@ -15,7 +15,6 @@ $(function () {
     brushSize = slider.value;
     fitToContainer(canvas);
 
-    // TODO: Fix mouse pointer offset for size and color change
     var current = {
         color: 'black',
         size: slider.value
@@ -26,6 +25,7 @@ $(function () {
         $('#mouse').css('height', current.size + 'px');
         $('#mouse').css('width', current.size + 'px');
     }
+    $('#mouse').hide();
     $('#nickname').focus();
     // Read nickname, hide name modal, show room modal
     $("#nameSelector").submit(function(e){
@@ -96,7 +96,7 @@ $(function () {
         }
 
     });
-    // TODO: Hide colors?
+    // TODO: Hide colors and size selector
     // Either hide or show the word for the round and the option to change it
     socket.on('word', function(msg){
         word = msg.data;
@@ -115,7 +115,8 @@ $(function () {
         else
         {
             $("#buttonWrapper").hide();
-            $("#word").text("_ ".repeat(word.length));
+            var hintText = getHint();
+            $("#word").text(hintText);
             isCurrPlayer = false;
         }
     });
@@ -131,9 +132,15 @@ $(function () {
             onDrawingEvent(data[i]);
     });
 
+    // TODO: Hide/ show dot when you enter/ leave
+    // TODO: Hide dot when not your turn
     // Show dot instead of cursor
     $("#whiteboard").mouseenter(function(event){
-        $('#whiteboard').css('cursor', 'none');
+        if(isCurrPlayer)
+        {
+            $('#mouse').show();
+            $('#whiteboard').css('cursor', 'none');
+        }
     });
 
     $("#whiteboard").mousemove(function(event){
@@ -142,6 +149,7 @@ $(function () {
     });
 
     $("#whiteboard").mouseleave(function(event){
+        $('#mouse').hide();
         $('#whiteboard').css('cursor', 'default');
     });
 
@@ -271,5 +279,18 @@ $(function () {
     function onResize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+    }
+
+    function getHint() {
+        var hint = "";
+        var split = word.split(" ");
+        for(var i = 0; i < split.length; i ++)
+        {
+            hint += "_ ".repeat(split[i].length);
+            if(i != split.length - 1)
+                hint += '\u00A0 \u00A0';
+        }
+
+        return hint;
     }
 });

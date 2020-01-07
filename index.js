@@ -4,7 +4,7 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var fs = require("fs");
 const port = process.env.PORT || 3000;
-var text = fs.readFileSync("nounlist.txt", "utf-8");
+var text = fs.readFileSync("newnounlist.txt", "utf-8");
 var textByLine = text.split("\n");
 
 app.use(express.static("public"));
