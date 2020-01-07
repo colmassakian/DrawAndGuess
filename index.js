@@ -63,7 +63,7 @@ io.on('connection', function(socket){
 
         var numClients = io.sockets.adapter.rooms[room].length;
         var clients = io.sockets.adapter.rooms[room].sockets;
-        
+
         lastClientID = getID(clients, numClients - 1);
         io.to(lastClientID).emit('drawing info', data);
     });

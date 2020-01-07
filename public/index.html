@@ -25,6 +25,7 @@
         </form>
     </div>
 </div>
+<div id="mouse"></div>
 <div id="mainPageContainer" style="display: none;">
     <div class="wordContainer" id="word-wrapper">
         <div id="word"></div>
@@ -38,7 +39,7 @@
         </div>
     </div>
     <div class="canvasContainer">
-        <canvas class="whiteboard"></canvas>
+        <canvas class="whiteboard" id="whiteboard"></canvas>
         <div class="colors">
             <div class="color black"></div>
             <div class="color red"></div>
@@ -49,9 +50,10 @@
         </div>
         <!-- TODO: Fix sizes -->
         <div class="sizes">
-            <div class="size small"></div>
-            <div class="size medium"></div>
-            <div class="size large"></div>
+            <input type="range" min="1" max="20" value="3" class="slider" id="slider">
+            <!--<div class="size small"></div>-->
+            <!--<div class="size medium"></div>-->
+            <!--<div class="size large"></div>-->
         </div>
         <!-- TODO: Add clear button/ eraser -->
     </div>

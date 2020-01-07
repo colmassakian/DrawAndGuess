@@ -135,11 +135,23 @@ input.modalInput {
     z-index: 1;
 }
 
-.size {
-    display: inline-block;
+#mouse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: #000000;
     border-radius: 50%;
-    background-color: black;
+    height: 3px;
+    width: 3px;
+    margin-top: 0;
+    margin-left: 0;
 }
+
+/*.size {*/
+    /*display: inline-block;*/
+    /*border-radius: 50%;*/
+    /*background-color: black;*/
+/*}*/
 
 .color.black { background-color: black; }
 .color.red { background-color: red; }

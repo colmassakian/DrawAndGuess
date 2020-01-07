@@ -3,6 +3,7 @@ var room;
 var word;
 var isCurrPlayer = false;
 var  savedDrawing = [];
+var brushSize;
 
 $(function () {
     var socket = io();
@@ -10,13 +11,21 @@ $(function () {
     var colors = document.getElementsByClassName('color');
     var sizes = document.getElementsByClassName('size');
     var context = canvas.getContext('2d');
+    var slider = document.getElementById("slider");
+    brushSize = slider.value;
     fitToContainer(canvas);
 
+    // TODO: Fix mouse pointer offset for size and color change
     var current = {
         color: 'black',
-        size: 3
+        size: slider.value
     };
     var drawing = false;
+    slider.oninput = function() {
+        current.size = this.value;
+        $('#mouse').css('height', current.size + 'px');
+        $('#mouse').css('width', current.size + 'px');
+    }
     $('#nickname').focus();
     // Read nickname, hide name modal, show room modal
     $("#nameSelector").submit(function(e){
@@ -122,6 +131,20 @@ $(function () {
             onDrawingEvent(data[i]);
     });
 
+    // Show dot instead of cursor
+    $("#whiteboard").mouseenter(function(event){
+        $('#whiteboard').css('cursor', 'none');
+    });
+
+    $("#whiteboard").mousemove(function(event){
+        $('#mouse').css('top', (event.pageY - current.size / 2) + 'px');
+        $('#mouse').css('left', (event.pageX - current.size / 2) + 'px');
+    });
+
+    $("#whiteboard").mouseleave(function(event){
+        $('#whiteboard').css('cursor', 'default');
+    });
+
     canvas.addEventListener('mousedown', onMouseDown, false);
     canvas.addEventListener('mouseup', onMouseUp, false);
     canvas.addEventListener('mouseout', onMouseUp, false);
@@ -137,9 +160,9 @@ $(function () {
         colors[i].addEventListener('click', onColorUpdate, false);
     }
 
-    for (var i = 0; i < sizes.length; i++){
-        sizes[i].addEventListener('click', onSizeUpdate, false);
-    }
+    // for (var i = 0; i < sizes.length; i++){
+    //     sizes[i].addEventListener('click', onSizeUpdate, false);
+    // }
 
     socket.on('drawing', onDrawingEvent);
 
@@ -211,18 +234,19 @@ $(function () {
 
     function onColorUpdate(e){
         current.color = e.target.className.split(' ')[1];
+        $('#mouse').css('background', current.color);
     }
 
-    function onSizeUpdate(e){
-        var sizeName = e.target.className.split(' ')[1];
-
-        if(sizeName == 'small')
-            current.size = 3;
-        else if(sizeName == 'medium')
-            current.size = 6;
-        else if(sizeName == 'large')
-            current.size = 9;
-    }
+    // function onSizeUpdate(e){
+    //     var sizeName = e.target.className.split(' ')[1];
+    //
+    //     if(sizeName == 'small')
+    //         current.size = 3;
+    //     else if(sizeName == 'medium')
+    //         current.size = 6;
+    //     else if(sizeName == 'large')
+    //         current.size = 9;
+    // }
 
     // limit the number of events per second
     function throttle(callback, delay) {
