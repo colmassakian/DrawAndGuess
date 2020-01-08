@@ -34,6 +34,7 @@ $(function () {
         $('#nameModalContainer').fadeOut(750);
         $("#room").focus();
         nickname = $('#nickname').val();
+        socket.emit('client name', nickname);
     });
     // Read room, hide room modal, show main chat page
     $("#roomSelector").submit(function(e){
@@ -42,25 +43,24 @@ $(function () {
         $('#roomModalContainer').fadeOut(750);
         $("#m").focus();
         room = $('#room').val();
-        socket.emit('room', {name: nickname, roomName: room});
+        socket.emit('room', room);
     });
     // Send message to other connections
     $("#chatMessage").submit(function(e){
         e.preventDefault(); // prevents page reloading
         var text = $('#m').val();
-        // Package client's room and nickname with message
-        var msg = {roomName:room, message:nickname + ": " + text};
+
         // Don't let current player write the word in chat
         if(text == word && isCurrPlayer)
-            msg.message = nickname + ": " + "*".repeat(word.length);
+            msg.message = "*".repeat(word.length);
 
-        socket.emit('chat message', msg);
+        socket.emit('chat message', text);
         $('#m').val(''); // Clear the chat input field
 
-        // TODO: Keep score
+        // TODO: HIGH Keep score
         // Check if a client whose turn it isn't got the correct word
-        if(text == word && !isCurrPlayer)
-            socket.emit('round over', room);
+        if(text.toLowerCase() == word.toLowerCase() && !isCurrPlayer)
+            socket.emit('round over');
 
         return false;
     });
@@ -68,18 +68,18 @@ $(function () {
     // Notify other connections that word was changed
     $("#wordButton").submit(function(e){
         e.preventDefault(); // prevents page reloading
-        socket.emit('new word', room);
+        socket.emit('new word');
         return false;
     });
     // Notify other connections that turn was passed
     $("#passButton").submit(function(e){
         e.preventDefault(); // prevents page reloading
-        socket.emit('pass turn', {name: nickname, roomName: room});
-        socket.emit('round over', room);
+        socket.emit('pass turn');
+        socket.emit('round over');
         return false;
     });
 
-    // TODO: Highlight correct answer
+    // TODO: LOW Highlight correct answer
     // Don't combine nickname when sending, combine when displaying so that msg == word will work
     // Show received message
     socket.on('chat message', function(msg){
@@ -96,7 +96,7 @@ $(function () {
         }
 
     });
-    // TODO: Hide colors and size selector
+    // TODO: MED Hide colors and size selector
     // Either hide or show the word for the round and the option to change it
     socket.on('word', function(msg){
         word = msg.data;
@@ -132,8 +132,8 @@ $(function () {
             onDrawingEvent(data[i]);
     });
 
-    // TODO: Hide/ show dot when you enter/ leave
-    // TODO: Hide dot when not your turn
+    // TODO: MED Hide/ show dot when you enter/ leave
+    // TODO: MED Hide dot when not your turn
     // Show dot instead of cursor
     $("#whiteboard").mouseenter(function(event){
         if(isCurrPlayer)
@@ -205,7 +205,6 @@ $(function () {
         if (!emit) { return; }
 
         var drawingInfo = {
-            roomName: room,
             x0: x0 / w,
             y0: y0 / h,
             x1: x1 / w,
@@ -244,17 +243,6 @@ $(function () {
         current.color = e.target.className.split(' ')[1];
         $('#mouse').css('background', current.color);
     }
-
-    // function onSizeUpdate(e){
-    //     var sizeName = e.target.className.split(' ')[1];
-    //
-    //     if(sizeName == 'small')
-    //         current.size = 3;
-    //     else if(sizeName == 'medium')
-    //         current.size = 6;
-    //     else if(sizeName == 'large')
-    //         current.size = 9;
-    // }
 
     // limit the number of events per second
     function throttle(callback, delay) {
