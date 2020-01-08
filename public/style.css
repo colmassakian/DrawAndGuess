@@ -135,6 +135,11 @@ input.modalInput {
     z-index: 1;
 }
 
+.moreColor {
+    position: relative;
+    z-index: 1;
+}
+
 #mouse {
     position: absolute;
     top: 50%;

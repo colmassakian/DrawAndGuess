@@ -1,5 +1,4 @@
 var nickname;
-var room;
 var word;
 var isCurrPlayer = false;
 var  savedDrawing = [];
@@ -9,9 +8,9 @@ $(function () {
     var socket = io();
     var canvas = document.getElementsByClassName('whiteboard')[0];
     var colors = document.getElementsByClassName('color');
-    var sizes = document.getElementsByClassName('size');
     var context = canvas.getContext('2d');
     var slider = document.getElementById("slider");
+    var colorpicker = document.getElementById("colorpicker");
     brushSize = slider.value;
     fitToContainer(canvas);
 
@@ -20,10 +19,16 @@ $(function () {
         size: slider.value
     };
     var drawing = false;
+
     slider.oninput = function() {
         current.size = this.value;
         $('#mouse').css('height', current.size + 'px');
         $('#mouse').css('width', current.size + 'px');
+    }
+
+    colorpicker.oninput = function() {
+        current.color = this.value;
+        $('#mouse').css('background', current.color);
     }
     $('#mouse').hide();
     $('#nickname').focus();
@@ -42,7 +47,7 @@ $(function () {
         $('#mainPageContainer').show();
         $('#roomModalContainer').fadeOut(750);
         $("#m").focus();
-        room = $('#room').val();
+        const room = $('#room').val();
         socket.emit('room', room);
     });
     // Send message to other connections
@@ -128,14 +133,14 @@ $(function () {
 
     // Draw the saved data to be up-to-date on the drawing for the round
     socket.on('drawing info', function(data) {
-        for(var i = 0; i < data.length; i ++)
+        for(let i = 0; i < data.length; i ++)
             onDrawingEvent(data[i]);
     });
 
     // TODO: MED Hide/ show dot when you enter/ leave
     // TODO: MED Hide dot when not your turn
     // Show dot instead of cursor
-    $("#whiteboard").mouseenter(function(event){
+    $("#whiteboard").mouseenter(function(){
         if(isCurrPlayer)
         {
             $('#mouse').show();
@@ -148,7 +153,7 @@ $(function () {
         $('#mouse').css('left', (event.pageX - current.size / 2) + 'px');
     });
 
-    $("#whiteboard").mouseleave(function(event){
+    $("#whiteboard").mouseleave(function(){
         $('#mouse').hide();
         $('#whiteboard').css('cursor', 'default');
     });
@@ -168,10 +173,6 @@ $(function () {
         colors[i].addEventListener('click', onColorUpdate, false);
     }
 
-    // for (var i = 0; i < sizes.length; i++){
-    //     sizes[i].addEventListener('click', onSizeUpdate, false);
-    // }
-
     socket.on('drawing', onDrawingEvent);
 
     window.addEventListener('resize', onResize, false);
@@ -186,13 +187,13 @@ $(function () {
 
     // TODO: Adjust drawing for clients too?
     function drawLine(x0, y0, x1, y1, color, size, emit){
-        var w = canvas.width;
-        var h = canvas.height;
-        var rect = canvas.getBoundingClientRect();
-        var offsetX = rect.left;
-        var offsetY = rect.top;
-        var adjW = canvas.scrollWidth / w;
-        var adjH = canvas.scrollHeight / h;
+        const w = canvas.width;
+        const h = canvas.height;
+        const rect = canvas.getBoundingClientRect();
+        const offsetX = rect.left;
+        const offsetY = rect.top;
+        const adjW = canvas.scrollWidth / w;
+        const adjH = canvas.scrollHeight / h;
 
         context.beginPath();
         context.moveTo((x0 - offsetX) / adjW, (y0 - offsetY) / adjH);
@@ -239,8 +240,10 @@ $(function () {
         current.y = e.clientY||e.touches[0].clientY;
     }
 
+    // TODO: Change colorpicker value to hex
     function onColorUpdate(e){
         current.color = e.target.className.split(' ')[1];
+        colorpicker.value = current.color;
         $('#mouse').css('background', current.color);
     }
 
@@ -270,9 +273,9 @@ $(function () {
     }
 
     function getHint() {
-        var hint = "";
-        var split = word.split(" ");
-        for(var i = 0; i < split.length; i ++)
+        let hint = "";
+        let split = word.split(" ");
+        for(let i = 0; i < split.length; i ++)
         {
             hint += "_ ".repeat(split[i].length);
             if(i != split.length - 1)
