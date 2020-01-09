@@ -76,6 +76,7 @@ $(function () {
         socket.emit('new word');
         return false;
     });
+    // TODO: MED Don't inc score on pass
     // Notify other connections that turn was passed
     $("#passButton").submit(function(e){
         e.preventDefault(); // prevents page reloading

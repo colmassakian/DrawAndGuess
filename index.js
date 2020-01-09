@@ -38,12 +38,14 @@ io.on('connection', function(socket){
             var random = Math.floor(Math.random() * textByLine.length);
             currentWord = textByLine[random];
             playerID = getVal(clients, 0);
+            var score = [{id: socket.id, score: 0}];
             // Store current game state for the room in an array
-            roomInfo.push({roomName: room, currPlayer: 0, currWord: currentWord});
+            roomInfo.push({roomName: room, currPlayer: 0, currWord: currentWord, scores: score});
         }
         else // Room already exists
         {
             currentWord = roomInfo[roomIndex].currWord;
+            roomInfo[roomIndex].scores.push({id: socket.id, score: 0});
             playerID = getVal(clients, roomInfo[roomIndex].currPlayer);
         }
 
@@ -68,7 +70,7 @@ io.on('connection', function(socket){
         var numClients = io.sockets.adapter.rooms[room].length;
         var clients = io.sockets.adapter.rooms[room].sockets;
 
-        lastClientID = getVal(clients, numClients - 1);
+        var lastClientID = getVal(clients, numClients - 1);
         io.to(lastClientID).emit('drawing info', data);
     });
     // Emit the next word to the next player
@@ -78,6 +80,10 @@ io.on('connection', function(socket){
         var clients = io.sockets.adapter.rooms[room].sockets;
         var roomIndex = contains(roomInfo, room);
 
+        var currIndex = findIndex(clients, socket.id);
+        // Increment score of players who sent round over message
+        roomInfo[roomIndex].scores[currIndex].score ++;
+        console.log(roomInfo[roomIndex].scores);
         // Get next player's index
         var current = roomInfo[roomIndex].currPlayer;
         current ++;
@@ -86,7 +92,9 @@ io.on('connection', function(socket){
 
         var random = Math.floor(Math.random() * textByLine.length);
         var id = getVal(clients, current);
-        var msg = {playerID: id, data: textByLine[random], roundOver: true};
+        var newWord = textByLine[random];
+        roomInfo[roomIndex].currWord = newWord;
+        var msg = {playerID: id, data: newWord, roundOver: true};
         roomInfo[roomIndex].currPlayer = current;
         io.to(room).emit('word', msg);
     });
@@ -103,8 +111,12 @@ io.on('connection', function(socket){
         var msg = {playerID: id, data: newWord, roundOver: false};
         io.to(room).emit('word', msg);
     });
+
     socket.on('disconnect', function(){
-        console.log('user disconnected');
+        removeScore(socket.id);
+
+        // roomInfo[roomIndex].scores.splice(index, 1);
+        console.log('user ' + socket.id + ' disconnected');
     });
 });
 
@@ -131,4 +143,31 @@ function getVal(clients, index) {
     }
 
     return -1;
+}
+
+// Return index in array with id that matches
+function findIndex(clients, id) {
+    var index = 0;
+    for (var clientId in clients) {
+        if(clientId == id)
+            return index;
+
+        index ++;
+    }
+
+    return -1;
+}
+
+// Remove element in score array that matches disconnected id
+function removeScore(id) {
+    var currRoom;
+    // Have to search all rooms since id leaves the room before disconnect is emitted
+    for(let i = 0; i < roomInfo.length; i ++)
+    {
+        currRoom = roomInfo[i];
+        for (let j = 0; j < currRoom.scores.length; j ++) {
+            if(currRoom.scores[j].id == id)
+                currRoom.scores.splice(j, 1);
+        }
+    }
 }
