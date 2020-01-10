@@ -41,12 +41,12 @@
     <div class="canvasContainer">
         <canvas class="whiteboard" id="whiteboard"></canvas>
         <div class="colors">
-            <div class="color black"></div>
-            <div class="color red"></div>
-            <div class="color green"></div>
-            <div class="color blue"></div>
-            <div class="color yellow"></div>
-            <div class="color white"></div>
+            <div class="color #000000"></div>
+            <div class="color #FF0000"></div>
+            <div class="color #008000"></div>
+            <div class="color #0000FF"></div>
+            <div class="color #FFFF00"></div>
+            <div class="color #FFFFFF"></div>
         </div>
         <div class="sizes">
             <input type="range" min="1" max="20" value="3" class="slider" id="slider">
@@ -54,6 +54,7 @@
         <div class="moreColor">
             <input type="color" name="extracolor" value="#fff" id="colorpicker">
         </div>
+        <div id="scores"></div>
         <!-- TODO: Add clear button -->
     </div>
     <div class="chatContainer">

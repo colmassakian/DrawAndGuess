@@ -158,12 +158,12 @@ input.modalInput {
     /*background-color: black;*/
 /*}*/
 
-.color.black { background-color: black; }
-.color.red { background-color: red; }
-.color.green { background-color: green; }
-.color.blue { background-color: blue; }
-.color.yellow { background-color: yellow; }
-.color.white { background-color: white; }
+.color.\#000000 { background-color: black; }
+.color.\#FF0000 { background-color: red; }
+.color.\#008000 { background-color: green; }
+.color.\#0000FF{ background-color: blue; }
+.color.\#FFFF00 { background-color: yellow; }
+.color.\#FFFFFF { background-color: white; }
 
 .size.small { height: 3px; width: 3px;}
 .size.medium { height: 6px; width: 6px;}
