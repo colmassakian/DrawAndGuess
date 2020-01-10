@@ -23,7 +23,7 @@ io.on('connection', function(socket){
         socket.nickname = name;
     });
 
-    // TODO: Display list of rooms
+    // TODO: HIGH Display list of rooms
     socket.on('room', function(room){
         socket.join(room);
 
@@ -40,13 +40,13 @@ io.on('connection', function(socket){
             playerID = getVal(clients, 0);
             var score = [{id: socket.id, name: socket.nickname, score: 0}];
             // Store current game state for the room in an array
-            roomInfo.push({roomName: room, currPlayer: 0, currWord: currentWord, scores: score});
+            roomInfo.push({roomName: room, currPlayer: 0, currWord: currentWord, scoreInfo: score});
             roomIndex = roomInfo.length - 1;
         }
         else // Room already exists
         {
             currentWord = roomInfo[roomIndex].currWord;
-            roomInfo[roomIndex].scores.push({id: socket.id, name: socket.nickname, score: 0});
+            roomInfo[roomIndex].scoreInfo.push({id: socket.id, name: socket.nickname, score: 0});
             playerID = getVal(clients, roomInfo[roomIndex].currPlayer);
         }
 
@@ -54,7 +54,7 @@ io.on('connection', function(socket){
         socket.to(room).emit('system message', socket.nickname + " joined the room!");
         if(socket.id != playerID)
             io.to(playerID).emit('request drawing');
-        io.to(room).emit('scores', roomInfo[roomIndex].scores);
+        io.to(room).emit('scores', roomInfo[roomIndex].scoreInfo);
         io.to(room).emit('word', msg);
     });
     // Emit drawing information to clients in room
@@ -86,8 +86,8 @@ io.on('connection', function(socket){
         var currIndex = findIndex(clients, socket.id);
         if(correctAnswer) // Don't increase and emit score if turn was passed
         {
-            roomInfo[roomIndex].scores[currIndex].score ++;
-            io.to(room).emit('scores', roomInfo[roomIndex].scores);
+            roomInfo[roomIndex].scoreInfo[currIndex].score ++;
+            io.to(room).emit('scores', roomInfo[roomIndex].scoreInfo);
         }
         io.to(room).emit('system message', "The word was " + roomInfo[roomIndex].currWord + ". New round!");
 
@@ -126,7 +126,7 @@ io.on('connection', function(socket){
         if(room != null)
         {
             socket.to(room.name).emit('system message', socket.nickname + " left the room!");
-            socket.to(room.name).emit('scores', roomInfo[room.index].scores);
+            socket.to(room.name).emit('scores', roomInfo[room.index].scoreInfo);
         }
 
         console.log('user ' + socket.id + ' disconnected');
@@ -178,10 +178,10 @@ function removeScore(id) {
     for(let i = 0; i < roomInfo.length; i ++)
     {
         currRoom = roomInfo[i];
-        for (let j = 0; j < currRoom.scores.length; j ++) {
-            if(currRoom.scores[j].id == id)
+        for (let j = 0; j < currRoom.scoreInfo.length; j ++) {
+            if(currRoom.scoreInfo[j].id == id)
             {
-                currRoom.scores.splice(j, 1);
+                currRoom.scoreInfo.splice(j, 1);
                 return {name: currRoom.roomName, index: i};
             }
         }

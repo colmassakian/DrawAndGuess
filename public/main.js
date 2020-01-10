@@ -253,7 +253,6 @@ $(function () {
         current.y = e.clientY||e.touches[0].clientY;
     }
 
-    // TODO: Change colorpicker value to hex
     function onColorUpdate(e){
         current.color = e.target.className.split(' ')[1];
         colorpicker.value = current.color;
