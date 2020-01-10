@@ -30,11 +30,11 @@
     <div class="wordContainer" id="word-wrapper">
         <div id="word"></div>
         <div id="buttonWrapper">
-            <form id="wordButton" action="">
-                <input clss="newWord" id="newWord" type="submit" value="New Word">
+            <form id="wordButton" action="" style="display: inline-block;">
+                <input clss="newWord" id="newWord" type="submit" value="Get Word">
             </form>
-            <form id="passButton" action="">
-                <input clss="pass" id="pass" type="submit" value="Pass">
+            <form id="passButton" action="" style="display: inline-block;">
+                <input clss="pass" id="pass" type="submit" value="Pass Turn">
             </form>
         </div>
     </div>
@@ -54,9 +54,12 @@
         <div class="moreColor">
             <input type="color" name="extracolor" value="#fff" id="colorpicker">
         </div>
-        <!-- TODO: MED Make scores prettier -->
-        <div id="scores"></div>
         <!-- TODO: HIGH Add clear button -->
+    </div>
+    <!-- TODO: MED Make scores prettier -->
+    <div class="scoreContainer">
+        <h2><b>SCORES:</b></h2>
+        <div id="scores"></div>
     </div>
     <div class="chatContainer">
         <ul id="messages"></ul>

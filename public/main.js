@@ -85,22 +85,13 @@ $(function () {
     });
 
     // TODO: LOW Highlight correct answer
-    // Don't combine nickname when sending, combine when displaying so that msg == word will work
     // Show received message
     socket.on('chat message', function(msg){
         $('#messages').append($('<li>').text(msg));
         $('#messages').animate({ scrollTop: $('#messages').height() }, "slow");
-        // Colors correct message green if user with name 't' wrote it, need to make generic
-        // if(msg.includes('joined the room!') || msg.includes(' passed. New round!'))
-        //     $("li").last().css("text-align", "center");
-        //
-        // if(msg.includes(word))
-        // {
-        //     $('#messages').append($('<li>').text("The word was " + word + ". New round!"));
-        //     $("li").last().css("text-align", "center");
-        // }
-
     });
+
+    // Show general messages in the center of the chat column
     socket.on('system message', function(msg){
         $('#messages').append($('<li>').text(msg));
         $('#messages').animate({ scrollTop: $('#messages').height() }, "slow");
@@ -146,10 +137,10 @@ $(function () {
         var nHTML = '';
 
         data.forEach(function(scoreObj) {
-            nHTML += '<li>' + scoreObj.name + ': ' + scoreObj.score + '</li>';
+            nHTML += '<p>' + scoreObj.name + ': ' + scoreObj.score + '</p>';
         });
 
-        document.getElementById("scores").innerHTML = '<ul>' + nHTML + '</ul>'
+        document.getElementById("scores").innerHTML = nHTML;
     });
 
     // Show dot instead of cursor
@@ -287,6 +278,7 @@ $(function () {
     function getHint() {
         let hint = "";
         let split = word.split(" ");
+
         for(let i = 0; i < split.length; i ++)
         {
             hint += "_ ".repeat(split[i].length);
