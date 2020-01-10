@@ -38,27 +38,29 @@ io.on('connection', function(socket){
             var random = Math.floor(Math.random() * textByLine.length);
             currentWord = textByLine[random];
             playerID = getVal(clients, 0);
-            var score = [{id: socket.id, score: 0}];
+            var score = [{id: socket.id, name: socket.nickname, score: 0}];
             // Store current game state for the room in an array
             roomInfo.push({roomName: room, currPlayer: 0, currWord: currentWord, scores: score});
+            roomIndex = roomInfo.length - 1;
         }
         else // Room already exists
         {
             currentWord = roomInfo[roomIndex].currWord;
-            roomInfo[roomIndex].scores.push({id: socket.id, score: 0});
+            roomInfo[roomIndex].scores.push({id: socket.id, name: socket.nickname, score: 0});
             playerID = getVal(clients, roomInfo[roomIndex].currPlayer);
         }
 
         msg = {playerID: playerID, data: currentWord, roundOver: false};
-        socket.to(room).emit('chat message', socket.nickname + " joined the room!");
+        socket.to(room).emit('system message', socket.nickname + " joined the room!");
         if(socket.id != playerID)
             io.to(playerID).emit('request drawing');
+        io.to(room).emit('scores', roomInfo[roomIndex].scores);
         io.to(room).emit('word', msg);
     });
     // Emit drawing information to clients in room
     socket.on('drawing', (data) => socket.to(getVal(socket.rooms, 1)).emit('drawing', data));
 
-    socket.on('pass turn', () => socket.to(getVal(socket.rooms, 1)).emit('chat message', socket.nickname + " passed. New round!"));
+    socket.on('pass turn', () => socket.to(getVal(socket.rooms, 1)).emit('system message', socket.nickname + " passed. New round!"));
 
     // Send saved drawing info to last player to join the room
     socket.on('send drawing', function(data){
@@ -74,16 +76,21 @@ io.on('connection', function(socket){
         io.to(lastClientID).emit('drawing info', data);
     });
     // Emit the next word to the next player
-    socket.on('round over', function(){
+    socket.on('round over', function(correctAnswer){
         var room = getVal(socket.rooms, 1);
         var numClients = io.sockets.adapter.rooms[room].length;
         var clients = io.sockets.adapter.rooms[room].sockets;
         var roomIndex = contains(roomInfo, room);
 
+        // Increment score of player who sent round over message/ got correct word
         var currIndex = findIndex(clients, socket.id);
-        // Increment score of players who sent round over message
-        roomInfo[roomIndex].scores[currIndex].score ++;
-        console.log(roomInfo[roomIndex].scores);
+        if(correctAnswer) // Don't increase and emit score if turn was passed
+        {
+            roomInfo[roomIndex].scores[currIndex].score ++;
+            io.to(room).emit('scores', roomInfo[roomIndex].scores);
+        }
+        io.to(room).emit('system message', "The word was " + roomInfo[roomIndex].currWord + ". New round!");
+
         // Get next player's index
         var current = roomInfo[roomIndex].currPlayer;
         current ++;
@@ -109,13 +116,19 @@ io.on('connection', function(socket){
         var newWord = textByLine[random]
         roomInfo[roomIndex].currWord = newWord;
         var msg = {playerID: id, data: newWord, roundOver: false};
+        io.to(room).emit('system message', socket.nickname + " changed their word");
         io.to(room).emit('word', msg);
     });
 
     socket.on('disconnect', function(){
-        removeScore(socket.id);
+        var room = removeScore(socket.id);
 
-        // roomInfo[roomIndex].scores.splice(index, 1);
+        if(room != null)
+        {
+            socket.to(room.name).emit('system message', socket.nickname + " left the room!");
+            socket.to(room.name).emit('scores', roomInfo[room.index].scores);
+        }
+
         console.log('user ' + socket.id + ' disconnected');
     });
 });
@@ -167,7 +180,11 @@ function removeScore(id) {
         currRoom = roomInfo[i];
         for (let j = 0; j < currRoom.scores.length; j ++) {
             if(currRoom.scores[j].id == id)
+            {
                 currRoom.scores.splice(j, 1);
+                return {name: currRoom.roomName, index: i};
+            }
         }
     }
+    return null;
 }

@@ -62,10 +62,9 @@ $(function () {
         socket.emit('chat message', text);
         $('#m').val(''); // Clear the chat input field
 
-        // TODO: HIGH Keep score
         // Check if a client whose turn it isn't got the correct word
         if(text.toLowerCase() == word.toLowerCase() && !isCurrPlayer)
-            socket.emit('round over');
+            socket.emit('round over', true);
 
         return false;
     });
@@ -76,12 +75,12 @@ $(function () {
         socket.emit('new word');
         return false;
     });
-    // TODO: MED Don't inc score on pass
+
     // Notify other connections that turn was passed
     $("#passButton").submit(function(e){
         e.preventDefault(); // prevents page reloading
         socket.emit('pass turn');
-        socket.emit('round over');
+        socket.emit('round over', false);
         return false;
     });
 
@@ -92,15 +91,20 @@ $(function () {
         $('#messages').append($('<li>').text(msg));
         $('#messages').animate({ scrollTop: $('#messages').height() }, "slow");
         // Colors correct message green if user with name 't' wrote it, need to make generic
-        if(msg.includes('joined the room!') || msg.includes(' passed. New round!'))
-            $("li").last().css("text-align", "center");
+        // if(msg.includes('joined the room!') || msg.includes(' passed. New round!'))
+        //     $("li").last().css("text-align", "center");
+        //
+        // if(msg.includes(word))
+        // {
+        //     $('#messages').append($('<li>').text("The word was " + word + ". New round!"));
+        //     $("li").last().css("text-align", "center");
+        // }
 
-        if(msg.includes(word))
-        {
-            $('#messages').append($('<li>').text("The word was " + word + ". New round!"));
-            $("li").last().css("text-align", "center");
-        }
-
+    });
+    socket.on('system message', function(msg){
+        $('#messages').append($('<li>').text(msg));
+        $('#messages').animate({ scrollTop: $('#messages').height() }, "slow");
+        $("li").last().css("text-align", "center");
     });
     // TODO: MED Hide colors and size selector
     // Either hide or show the word for the round and the option to change it
@@ -138,8 +142,16 @@ $(function () {
             onDrawingEvent(data[i]);
     });
 
-    // TODO: MED Hide/ show dot when you enter/ leave
-    // TODO: MED Hide dot when not your turn
+    socket.on('scores', function(data) {
+        var nHTML = '';
+
+        data.forEach(function(scoreObj) {
+            nHTML += '<li>' + scoreObj.name + ': ' + scoreObj.score + '</li>';
+        });
+
+        document.getElementById("scores").innerHTML = '<ul>' + nHTML + '</ul>'
+    });
+
     // Show dot instead of cursor
     $("#whiteboard").mouseenter(function(){
         if(isCurrPlayer)
