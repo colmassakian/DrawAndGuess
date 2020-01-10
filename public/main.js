@@ -15,10 +15,21 @@ $(function () {
     fitToContainer(canvas);
 
     var current = {
+        startX: 0,
+        startY: 0,
         color: 'black',
         size: slider.value
     };
+
+    var shapeEnum = {
+        line: 0,
+        rect: 1,
+        circle: 2,
+        triangle: 3
+    };
+
     var drawing = false;
+    var drawingShape = 0;
 
     slider.oninput = function() {
         current.size = this.value;
@@ -162,6 +173,20 @@ $(function () {
         $('#whiteboard').css('cursor', 'default');
     });
 
+    $( "#rect" ).click(function() {
+        if(drawingShape == 0)
+            drawingShape = shapeEnum.rect;
+        else
+            drawingShape = 0;
+    });
+
+    $( "#circle" ).click(function() {
+        if(drawingShape == 0)
+            drawingShape = shapeEnum.circle;
+        else
+            drawingShape = 0;
+    });
+
     canvas.addEventListener('mousedown', onMouseDown, false);
     canvas.addEventListener('mouseup', onMouseUp, false);
     canvas.addEventListener('mouseout', onMouseUp, false);
@@ -190,7 +215,10 @@ $(function () {
     }
 
     // TODO: Adjust drawing for clients too?
-    function drawLine(x0, y0, x1, y1, color, size, emit){
+    // TODO: Show shape during drawing
+    // TODO: Draw shape from any corner
+    // TODO: Add other shapes
+    function drawLine(x0, y0, x1, y1, color, size, shape, emit){
         const w = canvas.width;
         const h = canvas.height;
         const rect = canvas.getBoundingClientRect();
@@ -198,10 +226,27 @@ $(function () {
         const offsetY = rect.top;
         const adjW = canvas.scrollWidth / w;
         const adjH = canvas.scrollHeight / h;
+        let sX = (x0 - offsetX) / adjW;
+        let sY = (y0 - offsetY) / adjH;
+        let eX = (x1 - offsetX) / adjW;
+        let eY = (y1 - offsetY) / adjH;
 
         context.beginPath();
-        context.moveTo((x0 - offsetX) / adjW, (y0 - offsetY) / adjH);
-        context.lineTo((x1 - offsetX) / adjW, (y1 - offsetY) / adjH);
+        if(shape == shapeEnum.line)
+        {
+            context.moveTo(sX, sY);
+            context.lineTo(eX, eY);
+        }
+        else if(shape == shapeEnum.rect)
+            context.rect(sX, sY, eX - sX, eY - sY);
+        else if(shape == shapeEnum.circle)
+        {
+            let a = eX - sX;
+            let b = eY - sY;
+            let delta = Math.sqrt( a*a + b*b );
+            context.arc(sX, sY, delta, 0, 2 * Math.PI);
+        }
+
         context.strokeStyle = color;
         context.lineWidth = size;
         context.stroke();
@@ -215,7 +260,8 @@ $(function () {
             x1: x1 / w,
             y1: y1 / h,
             color: color,
-            size: size
+            size: size,
+            shape: shape
         };
 
         // Save drawing so that it can be emitted to clients who join in the middle of a round
@@ -229,17 +275,58 @@ $(function () {
         drawing = isCurrPlayer;
         current.x = e.clientX||e.touches[0].clientX;
         current.y = e.clientY||e.touches[0].clientY;
+        current.startX = current.x;
+        current.startY = current.y;
+        console.log(drawingShape);
+        if(drawingShape == shapeEnum.rect)
+        {
+            $('#tempRect').css('top', (current.y - current.size / 2) + 'px');
+            $('#tempRect').css('left', (current.x - current.size / 2) + 'px');
+        }
     }
 
     function onMouseUp(e){
         if (!drawing) { return; }
         drawing = false;
-        drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, current.size, true);
+        if(drawingShape == shapeEnum.rect)
+        {
+            current.x = current.startX;
+            current.y = current.startY;
+            $('#tempRect').css('height', '0px');
+            $('#tempRect').css('width', '0px');
+            $('#tempRect').css('border-width', '0px');
+        }
+        drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, current.size, drawingShape, true);
     }
 
     function onMouseMove(e){
         if (!drawing) { return; }
-        drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, current.size, true);
+
+        if(drawingShape == shapeEnum.rect)
+        {
+            var pos = $('#tempRect').position();
+            var height = Math.abs(current.y - pos.top);
+            $('#tempRect').css('height', height + 'px');
+            var width = Math.abs(current.x - pos.left);
+            $('#tempRect').css('width', width + 'px');
+
+            $('#tempRect').css('border-width', current.size + 'px');
+            $('#tempRect').css('border-color', current.color);
+
+            if (current.y < current.startY) {
+                $('#tempRect').css('top', (current.y - current.size / 2) + 'px');
+                height = Math.abs(current.y - current.startY);
+                $('#tempRect').css('height', height + 'px');
+            }
+            if (current.x < current.startX) {
+                $('#tempRect').css('left', (current.x - current.size / 2) + 'px');
+                width = Math.abs(current.x - current.startX);
+                $('#tempRect').css('width', width + 'px');
+            }
+        }
+        else
+            drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, current.size, shapeEnum.line,  true);
+
         current.x = e.clientX||e.touches[0].clientX;
         current.y = e.clientY||e.touches[0].clientY;
     }
@@ -266,7 +353,7 @@ $(function () {
     function onDrawingEvent(data){
         var w = canvas.width;
         var h = canvas.height;
-        drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size);
+        drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color, data.size, data.shape);
     }
 
     // make the canvas fill its parent

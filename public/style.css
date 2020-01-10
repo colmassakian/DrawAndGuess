@@ -123,24 +123,56 @@ input.modalInput {
     width: 48px;
 }
 
-.sizes {
-    position: relative;
-    z-index: 1;
-}
-
 .moreColor {
     position: relative;
     z-index: 1;
 }
 
+.sizes {
+    position: relative;
+    z-index: 1;
+}
+
+.shapes {
+    position: relative;
+    z-index: 1;
+}
+
+#rect {
+    display: inline-block;
+    height: 20px;
+    width: 20px;
+    background-color: black;
+}
+
+#circle {
+    display: inline-block;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background-color: black;
+}
+
 #mouse {
+     position: absolute;
+     top: 50%;
+     left: 50%;
+     background: #000000;
+     border-radius: 50%;
+     height: 3px;
+     width: 3px;
+     margin-top: 0;
+     margin-left: 0;
+ }
+
+#tempRect {
     position: absolute;
     top: 50%;
     left: 50%;
-    background: #000000;
-    border-radius: 50%;
-    height: 3px;
-    width: 3px;
+    background: #FFFFFF;
+    border: 0px solid black;
+    height: 0px;
+    width: 0px;
     margin-top: 0;
     margin-left: 0;
 }
