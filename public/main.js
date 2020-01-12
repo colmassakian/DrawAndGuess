@@ -22,14 +22,14 @@ $(function () {
     };
 
     var shapeEnum = {
-        line: 0,
-        rect: 1,
-        circle: 2,
-        triangle: 3
+        line: 'line',
+        rect: 'tempRect',
+        circle: 'tempCircle',
+        triangle: 'tempTriangle'
     };
 
     var drawing = false;
-    var drawingShape = 0;
+    var drawingShape = 'line';
 
     slider.oninput = function() {
         current.size = this.value;
@@ -173,18 +173,19 @@ $(function () {
         $('#whiteboard').css('cursor', 'default');
     });
 
-    $( "#rect" ).click(function() {
-        if(drawingShape == 0)
-            drawingShape = shapeEnum.rect;
+    // TODO: Indicate that button is clicked, turn green?
+    $("#rect").click(function() {
+        if(drawingShape == shapeEnum.rect)
+            drawingShape = 'line';
         else
-            drawingShape = 0;
+            drawingShape = shapeEnum.rect;
     });
 
-    $( "#circle" ).click(function() {
-        if(drawingShape == 0)
-            drawingShape = shapeEnum.circle;
+    $("#circle").click(function() {
+        if(drawingShape == shapeEnum.circle)
+            drawingShape = 'line';
         else
-            drawingShape = 0;
+            drawingShape = shapeEnum.circle;
     });
 
     canvas.addEventListener('mousedown', onMouseDown, false);
@@ -215,8 +216,6 @@ $(function () {
     }
 
     // TODO: Adjust drawing for clients too?
-    // TODO: Show shape during drawing
-    // TODO: Draw shape from any corner
     // TODO: Add other shapes
     function drawLine(x0, y0, x1, y1, color, size, shape, emit){
         const w = canvas.width;
@@ -231,6 +230,7 @@ $(function () {
         let eX = (x1 - offsetX) / adjW;
         let eY = (y1 - offsetY) / adjH;
 
+        context.save(); // save state
         context.beginPath();
         if(shape == shapeEnum.line)
         {
@@ -241,12 +241,23 @@ $(function () {
             context.rect(sX, sY, eX - sX, eY - sY);
         else if(shape == shapeEnum.circle)
         {
-            let a = eX - sX;
-            let b = eY - sY;
-            let delta = Math.sqrt( a*a + b*b );
-            context.arc(sX, sY, delta, 0, 2 * Math.PI);
+            // Determine the scaling factor between x and y axis
+            let deltaX = eX - sX;
+            let deltaY = eY - sY;
+            let scaleX = Math.abs(deltaX / deltaY);
+
+            // Find center point and radius along the y-axis
+            let centerX = (eX + sX) / 2;
+            let centerY = (eY + sY) / 2;
+            let delta = Math.abs(eY - centerY);
+
+            // Canvas circles can only be round, use scale to make elliptical circles
+            context.scale(scaleX, 1);
+            centerX /= scaleX;
+            context.arc(centerX, centerY, delta, 0, 2 * Math.PI);
         }
 
+        context.restore();
         context.strokeStyle = color;
         context.lineWidth = size;
         context.stroke();
@@ -277,54 +288,60 @@ $(function () {
         current.y = e.clientY||e.touches[0].clientY;
         current.startX = current.x;
         current.startY = current.y;
-        console.log(drawingShape);
-        if(drawingShape == shapeEnum.rect)
+
+        // Move div to show preview of shape being drawn
+        if(drawingShape != shapeEnum.line)
         {
-            $('#tempRect').css('top', (current.y - current.size / 2) + 'px');
-            $('#tempRect').css('left', (current.x - current.size / 2) + 'px');
+            $('#' + drawingShape).css('top', (current.y - current.size / 2) + 'px');
+            $('#' + drawingShape).css('left', (current.x - current.size / 2) + 'px');
         }
     }
 
     function onMouseUp(e){
         if (!drawing) { return; }
         drawing = false;
-        if(drawingShape == shapeEnum.rect)
+
+        // Hide preview div once the shape is drawn on the canvas
+        if(drawingShape != shapeEnum.line)
         {
             current.x = current.startX;
             current.y = current.startY;
-            $('#tempRect').css('height', '0px');
-            $('#tempRect').css('width', '0px');
-            $('#tempRect').css('border-width', '0px');
+            $('#' + drawingShape).css('height', '0px');
+            $('#' + drawingShape).css('width', '0px');
+            $('#' + drawingShape).css('border-width', '0px');
         }
+
         drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, current.size, drawingShape, true);
     }
 
     function onMouseMove(e){
         if (!drawing) { return; }
 
-        if(drawingShape == shapeEnum.rect)
+        if(drawingShape != shapeEnum.line)
         {
-            var pos = $('#tempRect').position();
+            // Adjust the preview div's height and width to scale up/down with mouse position
+            var pos = $('#' + drawingShape).position();
             var height = Math.abs(current.y - pos.top);
-            $('#tempRect').css('height', height + 'px');
+            $('#' + drawingShape).css('height', height + 'px');
             var width = Math.abs(current.x - pos.left);
-            $('#tempRect').css('width', width + 'px');
+            $('#' + drawingShape).css('width', width + 'px');
 
-            $('#tempRect').css('border-width', current.size + 'px');
-            $('#tempRect').css('border-color', current.color);
+            $('#' + drawingShape).css('border-width', current.size + 'px');
+            $('#' + drawingShape).css('border-color', current.color);
 
+            // Adjust preview div if user starts dragging from anywhere other than top left
             if (current.y < current.startY) {
-                $('#tempRect').css('top', (current.y - current.size / 2) + 'px');
+                $('#' + drawingShape).css('top', (current.y - current.size / 2) + 'px');
                 height = Math.abs(current.y - current.startY);
-                $('#tempRect').css('height', height + 'px');
+                $('#' + drawingShape).css('height', height + 'px');
             }
             if (current.x < current.startX) {
-                $('#tempRect').css('left', (current.x - current.size / 2) + 'px');
+                $('#' + drawingShape).css('left', (current.x - current.size / 2) + 'px');
                 width = Math.abs(current.x - current.startX);
-                $('#tempRect').css('width', width + 'px');
+                $('#' + drawingShape).css('width', width + 'px');
             }
         }
-        else
+        else // Don't draw the shape to the canvas until it is done
             drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, current.size, shapeEnum.line,  true);
 
         current.x = e.clientX||e.touches[0].clientX;
