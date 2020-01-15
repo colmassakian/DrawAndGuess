@@ -4,10 +4,12 @@ var isCurrPlayer = false;
 var  savedDrawing = [];
 var brushSize;
 
+// TODO: HIGH Add undo button using savedDrawing array and redrawing canvas
 $(function () {
     var socket = io();
     var canvas = document.getElementsByClassName('whiteboard')[0];
     var colors = document.getElementsByClassName('color');
+    var shapes = document.getElementsByClassName('shape');
     var context = canvas.getContext('2d');
     var slider = document.getElementById("slider");
     var colorpicker = document.getElementById("colorpicker");
@@ -22,14 +24,15 @@ $(function () {
     };
 
     var shapeEnum = {
-        line: 'line',
+        free: 'free',
+        line: 'tempLine',
         rect: 'tempRect',
         circle: 'tempCircle',
         triangle: 'tempTriangle'
     };
 
     var drawing = false;
-    var drawingShape = 'line';
+    var drawingShape = 'free';
 
     slider.oninput = function() {
         current.size = this.value;
@@ -173,20 +176,6 @@ $(function () {
         $('#whiteboard').css('cursor', 'default');
     });
 
-    // TODO: Indicate that button is clicked, turn green?
-    $("#rect").click(function() {
-        if(drawingShape == shapeEnum.rect)
-            drawingShape = 'line';
-        else
-            drawingShape = shapeEnum.rect;
-    });
-
-    $("#circle").click(function() {
-        if(drawingShape == shapeEnum.circle)
-            drawingShape = 'line';
-        else
-            drawingShape = shapeEnum.circle;
-    });
 
     canvas.addEventListener('mousedown', onMouseDown, false);
     canvas.addEventListener('mouseup', onMouseUp, false);
@@ -203,6 +192,10 @@ $(function () {
         colors[i].addEventListener('click', onColorUpdate, false);
     }
 
+    for (var i = 0; i < shapes.length; i++){
+        shapes[i].addEventListener('click', onShapeSelection, false);
+    }
+
     socket.on('drawing', onDrawingEvent);
 
     window.addEventListener('resize', onResize, false);
@@ -216,7 +209,7 @@ $(function () {
     }
 
     // TODO: Adjust drawing for clients too?
-    // TODO: Add other shapes
+    // TODO: HIGH Add other shapes, straight line and triangle
     function drawLine(x0, y0, x1, y1, color, size, shape, emit){
         const w = canvas.width;
         const h = canvas.height;
@@ -232,7 +225,7 @@ $(function () {
 
         context.save(); // save state
         context.beginPath();
-        if(shape == shapeEnum.line)
+        if(shape == shapeEnum.free || shape == shapeEnum.line)
         {
             context.moveTo(sX, sY);
             context.lineTo(eX, eY);
@@ -290,7 +283,7 @@ $(function () {
         current.startY = current.y;
 
         // Move div to show preview of shape being drawn
-        if(drawingShape != shapeEnum.line)
+        if(drawingShape != shapeEnum.free)
         {
             $('#' + drawingShape).css('top', (current.y - current.size / 2) + 'px');
             $('#' + drawingShape).css('left', (current.x - current.size / 2) + 'px');
@@ -302,7 +295,7 @@ $(function () {
         drawing = false;
 
         // Hide preview div once the shape is drawn on the canvas
-        if(drawingShape != shapeEnum.line)
+        if(drawingShape != shapeEnum.free)
         {
             current.x = current.startX;
             current.y = current.startY;
@@ -317,7 +310,10 @@ $(function () {
     function onMouseMove(e){
         if (!drawing) { return; }
 
-        if(drawingShape != shapeEnum.line)
+        var newX = e.clientX||e.touches[0].clientX;
+        var newY = e.clientY||e.touches[0].clientY;
+
+        if(drawingShape != shapeEnum.free)
         {
             // Adjust the preview div's height and width to scale up/down with mouse position
             var pos = $('#' + drawingShape).position();
@@ -326,32 +322,73 @@ $(function () {
             var width = Math.abs(current.x - pos.left);
             $('#' + drawingShape).css('width', width + 'px');
 
-            $('#' + drawingShape).css('border-width', current.size + 'px');
             $('#' + drawingShape).css('border-color', current.color);
 
             // Adjust preview div if user starts dragging from anywhere other than top left
             if (current.y < current.startY) {
-                $('#' + drawingShape).css('top', (current.y - current.size / 2) + 'px');
                 height = Math.abs(current.y - current.startY);
-                $('#' + drawingShape).css('height', height + 'px');
+                if(drawingShape != shapeEnum.line)
+                {
+                    $('#' + drawingShape).css('top', (current.y - current.size / 2) + 'px');
+                    $('#' + drawingShape).css('height', height + 'px');
+                }
             }
             if (current.x < current.startX) {
-                $('#' + drawingShape).css('left', (current.x - current.size / 2) + 'px');
                 width = Math.abs(current.x - current.startX);
-                $('#' + drawingShape).css('width', width + 'px');
+                if(drawingShape != shapeEnum.line)
+                {
+                    $('#' + drawingShape).css('left', (current.x - current.size / 2) + 'px');
+                    $('#' + drawingShape).css('width', width + 'px');
+                }
+            }
+
+            // When angle is close to 0, has no width because close to left side, calc hypotenuse with width and height
+            if(drawingShape != shapeEnum.line)
+                $('#' + drawingShape).css('border-width', current.size + 'px');
+            else
+            {
+                var angle = getAngle(current.startX, current.startY, newX, newY);
+                var length = Math.sqrt(width*width + height*height);
+                $('#' + drawingShape).css('height', '0px');
+                $('#' + drawingShape).css('width', length + 'px');
+                $('#' + drawingShape).css('border-top-width', current.size + 'px');
+                $('#' + drawingShape).css('transform', 'rotate(' + angle + 'deg)');
+                $('#' + drawingShape).css('transform-origin', 'top left');
             }
         }
         else // Don't draw the shape to the canvas until it is done
-            drawLine(current.x, current.y, e.clientX||e.touches[0].clientX, e.clientY||e.touches[0].clientY, current.color, current.size, shapeEnum.line,  true);
+            drawLine(current.x, current.y, newX, newY, current.color, current.size, shapeEnum.free,  true);
 
-        current.x = e.clientX||e.touches[0].clientX;
-        current.y = e.clientY||e.touches[0].clientY;
+        current.x = newX;
+        current.y = newY;
     }
 
     function onColorUpdate(e){
         current.color = e.target.className.split(' ')[1];
         colorpicker.value = current.color;
         $('#mouse').css('background', current.color);
+    }
+
+    function onShapeSelection(e) {
+        let currShape = e.target.className.split(' ')[1];
+
+        if(drawingShape == shapeEnum[currShape])
+        {
+            if(currShape == 'line')
+                $("#" + currShape).css('border-color', 'black');
+            else
+                $("#" + currShape).css('background-color', 'black');
+            drawingShape = 'free';
+        }
+        else
+        {
+            setAllBlack();
+            if(currShape == 'line')
+                $("#" + currShape).css('border-color', 'green');
+            else
+                $("#" + currShape).css('background-color', 'green');
+            drawingShape = shapeEnum[currShape];
+        }
     }
 
     // limit the number of events per second
@@ -391,5 +428,23 @@ $(function () {
         }
 
         return hint;
+    }
+
+    function getAngle(originX, originY, targetX, targetY) {
+        var dx = originX - targetX;
+        var dy = originY - targetY;
+
+        var theta = Math.atan2(-dy, -dx); // [0, Ⲡ] then [-Ⲡ, 0]; clockwise; 0° = east
+        theta *= 180 / Math.PI;           // [0, 180] then [-180, 0]; clockwise; 0° = east
+        if (theta < 0) theta += 360;      // [0, 360]; clockwise; 0° = east
+
+        return theta;
+    }
+
+    function setAllBlack() {
+        $("#line").css('border-color', 'black');
+        $("#rect").css('background-color', 'black');
+        $("#circle").css('background-color', 'black');
+        $("#triangle").css('background-color', 'black');
     }
 });

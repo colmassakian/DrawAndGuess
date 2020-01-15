@@ -138,6 +138,15 @@ input.modalInput {
     z-index: 1;
 }
 
+#line {
+    display: inline-block;
+    height:20px;
+    width: 28px;
+    border-top: 2px solid black;
+    transform: rotate(45deg);
+    transform-origin: 0% 0%;
+}
+
 #rect {
     display: inline-block;
     height: 20px;
@@ -165,7 +174,7 @@ input.modalInput {
      margin-left: 0;
  }
 
-#tempRect {
+#tempLine, #tempRect, #tempCircle {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -178,16 +187,7 @@ input.modalInput {
 }
 
 #tempCircle {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    background: #FFFFFF;
-    border: 0px solid black;
     border-radius: 50%;
-    height: 0px;
-    width: 0px;
-    margin-top: 0;
-    margin-left: 0;
 }
 
 .color.\#000000 { background-color: black; }
