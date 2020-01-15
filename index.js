@@ -60,6 +60,8 @@ io.on('connection', function(socket){
     // Emit drawing information to clients in room
     socket.on('drawing', (data) => socket.to(getVal(socket.rooms, 1)).emit('drawing', data));
 
+    socket.on('clear', () => socket.to(getVal(socket.rooms, 1)).emit('clear'));
+
     socket.on('pass turn', () => socket.to(getVal(socket.rooms, 1)).emit('system message', socket.nickname + " passed. New round!"));
 
     // Send saved drawing info to last player to join the room

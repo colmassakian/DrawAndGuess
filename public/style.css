@@ -162,6 +162,26 @@ input.modalInput {
     background-color: black;
 }
 
+.btn {
+    display: inline-block;
+    position: absolute;
+    bottom: 1%;
+    background-color: #66a7af;
+    border: none;
+    color: white;
+    padding: 12px 16px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.btn.clear {
+    left: 1%;
+}
+
+.btn.undo {
+    right: 1%;
+}
+
 #mouse {
      position: absolute;
      top: 50%;

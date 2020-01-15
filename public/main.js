@@ -13,6 +13,10 @@ $(function () {
     var context = canvas.getContext('2d');
     var slider = document.getElementById("slider");
     var colorpicker = document.getElementById("colorpicker");
+    var clearBtn = document.getElementById("clearBtn");
+    var undoBtn = document.getElementById("undoBtn");
+    clearBtn.onclick = clearScreen;
+    // undoBtn.onclick = undo();
     brushSize = slider.value;
     fitToContainer(canvas);
 
@@ -136,6 +140,11 @@ $(function () {
         }
     });
 
+    // Clear canvas
+    socket.on('clear', function(){
+        context.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
     // Emit room and drawing array
     socket.on('request drawing', function(){
         socket.emit('send drawing', savedDrawing);
@@ -176,7 +185,6 @@ $(function () {
         $('#whiteboard').css('cursor', 'default');
     });
 
-
     canvas.addEventListener('mousedown', onMouseDown, false);
     canvas.addEventListener('mouseup', onMouseUp, false);
     canvas.addEventListener('mouseout', onMouseUp, false);
@@ -209,7 +217,7 @@ $(function () {
     }
 
     // TODO: Adjust drawing for clients too?
-    // TODO: HIGH Add other shapes, straight line and triangle
+    // TODO: HIGH Add other shapes, triangle
     function drawLine(x0, y0, x1, y1, color, size, shape, emit){
         const w = canvas.width;
         const h = canvas.height;
@@ -446,5 +454,10 @@ $(function () {
         $("#rect").css('background-color', 'black');
         $("#circle").css('background-color', 'black');
         $("#triangle").css('background-color', 'black');
+    }
+
+    function clearScreen() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        socket.emit('clear');
     }
 });
