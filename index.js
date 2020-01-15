@@ -62,6 +62,8 @@ io.on('connection', function(socket){
 
     socket.on('clear', () => socket.to(getVal(socket.rooms, 1)).emit('clear'));
 
+    socket.on('undo', (data) => socket.to(getVal(socket.rooms, 1)).emit('undo', data));
+
     socket.on('pass turn', () => socket.to(getVal(socket.rooms, 1)).emit('system message', socket.nickname + " passed. New round!"));
 
     // Send saved drawing info to last player to join the room
@@ -122,6 +124,7 @@ io.on('connection', function(socket){
         io.to(room).emit('word', msg);
     });
 
+    // TODO: HIGH Remove room from roomInfo array when it is empty
     socket.on('disconnect', function(){
         var room = removeScore(socket.id);
 
@@ -130,7 +133,8 @@ io.on('connection', function(socket){
             socket.to(room.name).emit('system message', socket.nickname + " left the room!");
             socket.to(room.name).emit('scores', roomInfo[room.index].scoreInfo);
         }
-
+        // if(numClients == 0)
+        //     console.log("empty room");
         console.log('user ' + socket.id + ' disconnected');
     });
 });

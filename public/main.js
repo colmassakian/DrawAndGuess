@@ -3,6 +3,7 @@ var word;
 var isCurrPlayer = false;
 var  savedDrawing = [];
 var brushSize;
+var interval;
 
 // TODO: HIGH Add undo button using savedDrawing array and redrawing canvas
 $(function () {
@@ -16,7 +17,9 @@ $(function () {
     var clearBtn = document.getElementById("clearBtn");
     var undoBtn = document.getElementById("undoBtn");
     clearBtn.onclick = clearScreen;
-    // undoBtn.onclick = undo();
+    undoBtn.onclick = undo;
+    undoBtn.onmousedown = startInterval;
+    undoBtn.onmouseup = stopInterval;
     brushSize = slider.value;
     fitToContainer(canvas);
 
@@ -143,6 +146,12 @@ $(function () {
     // Clear canvas
     socket.on('clear', function(){
         context.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+
+    // Redraw canvas with undo changes
+    socket.on('undo', function(data){
+        updateDrawing(data);
     });
 
     // Emit room and drawing array
@@ -457,7 +466,31 @@ $(function () {
     }
 
     function clearScreen() {
+        if(!isCurrPlayer) { return; }
         context.clearRect(0, 0, canvas.width, canvas.height);
         socket.emit('clear');
+    }
+
+    function startInterval() {
+        interval = setInterval(undo, 100);
+    }
+
+    // TODO: Emit changes
+    function stopInterval() {
+        if(!isCurrPlayer) { return; }
+        clearInterval(interval);
+        socket.emit('undo', savedDrawing);
+    }
+
+    function undo() {
+        if(!isCurrPlayer) { return; }
+        savedDrawing.pop();
+        updateDrawing(savedDrawing);
+    }
+
+    function updateDrawing(data) {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        for(let i = 0; i < data.length; i ++)
+            onDrawingEvent(data[i]);
     }
 });
