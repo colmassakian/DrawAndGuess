@@ -5,7 +5,6 @@ var  savedDrawing = [];
 var brushSize;
 var interval;
 
-// TODO: HIGH Add undo button using savedDrawing array and redrawing canvas
 $(function () {
     var socket = io();
     var canvas = document.getElementsByClassName('whiteboard')[0];
@@ -475,7 +474,6 @@ $(function () {
         interval = setInterval(undo, 100);
     }
 
-    // TODO: Emit changes
     function stopInterval() {
         if(!isCurrPlayer) { return; }
         clearInterval(interval);

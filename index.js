@@ -124,17 +124,21 @@ io.on('connection', function(socket){
         io.to(room).emit('word', msg);
     });
 
-    // TODO: HIGH Remove room from roomInfo array when it is empty
     socket.on('disconnect', function(){
         var room = removeScore(socket.id);
 
         if(room != null)
         {
+            // Remove room info if the room is empty
+            if(typeof io.sockets.adapter.rooms[room.name] === 'undefined')
+            {
+                removeInfo(room.name);
+                return;
+            }
             socket.to(room.name).emit('system message', socket.nickname + " left the room!");
             socket.to(room.name).emit('scores', roomInfo[room.index].scoreInfo);
         }
-        // if(numClients == 0)
-        //     console.log("empty room");
+
         console.log('user ' + socket.id + ' disconnected');
     });
 });
@@ -193,4 +197,12 @@ function removeScore(id) {
         }
     }
     return null;
+}
+
+function removeInfo(name) {
+    for(let i = 0; i < roomInfo.length; i ++)
+    {
+        if(roomInfo[i].roomName == name)
+            roomInfo.splice(i, 1);
+    }
 }
