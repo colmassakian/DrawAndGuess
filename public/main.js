@@ -471,6 +471,7 @@ $(function () {
     }
 
     function startInterval() {
+        if(!isCurrPlayer) { return; }
         interval = setInterval(undo, 100);
     }
 
